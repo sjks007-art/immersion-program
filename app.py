@@ -485,20 +485,20 @@ elif st.session_state.page == "immersion":
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    if st.button("💾 생각 기록", use_container_width=True):
+                    if st.button("💾 생각 기록", use_container_width=True, key=f"save_{len(st.session_state.thoughts)}"):
                         if thought:
                             st.session_state.thoughts.append({
                                 "time": format_time(time.time() - st.session_state.start_time),
                                 "content": thought
                             })
-                            st.success("기록됨!")
+                            st.success("✅ 기록 완료!", icon="✅")
                 
                 with col2:
-                    if st.button("⏱️ 타이머 업데이트", use_container_width=True):
-                        pass  # 페이지가 다시 렌더링되면서 타이머 업데이트
+                    if st.button("⏱️ 타이머 새로고침", use_container_width=True, key="refresh"):
+                        st.experimental_rerun() if hasattr(st, 'experimental_rerun') else st.rerun()
                 
                 with col3:
-                    if st.button("🏁 몰입 종료", type="secondary", use_container_width=True):
+                    if st.button("🏁 몰입 종료", type="secondary", use_container_width=True, key="end"):
                         final_duration = time.time() - st.session_state.start_time
                         session_data = {
                             "user": st.session_state.user_name,
@@ -511,13 +511,14 @@ elif st.session_state.page == "immersion":
                         
                         st.session_state.immersion_active = False
                         st.session_state.immersion_step = 0
-                        st.session_state.breathing_done = False
                         
                         st.success(f"🎉 몰입 완료! {format_time(final_duration)}")
                         st.balloons()
                         
-                        time.sleep(2)
-                        st.session_state.page = "report"
+                        # 보고서 페이지로 이동 버튼 표시
+                        if st.button("📝 보고서 보기", type="primary", use_container_width=True):
+                            st.session_state.page = "report"
+                            st.experimental_rerun() if hasattr(st, 'experimental_rerun') else st.rerun()
                 
                 if st.session_state.thoughts:
                     st.markdown("---")
