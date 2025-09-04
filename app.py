@@ -1,4 +1,4 @@
-# app.py - 직장인 몰입 체험 프로그램 (UI 개선판)
+# app.py - 직장인 몰입 체험 프로그램 (최종 안정화 버전)
 import streamlit as st
 import time
 from datetime import datetime
@@ -6,17 +6,13 @@ import json
 from pathlib import Path
 import random
 
-# 페이지 설정 - 더 깔끔한 UI
+# 페이지 설정
 st.set_page_config(
     page_title="몰입 체험 프로그램",
     page_icon="🎯",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# 자동 새로고침 비활성화를 위한 설정
-if 'last_update' not in st.session_state:
-    st.session_state.last_update = time.time()
 
 # 데이터 저장 경로
 DATA_DIR = Path("immersion_data")
@@ -48,7 +44,7 @@ def save_session(session_data):
         json.dump(sessions, f, ensure_ascii=False, indent=2)
     return sessions
 
-# CSS 스타일 (깜빡임 제거)
+# CSS 스타일
 st.markdown("""
 <style>
     /* Streamlit 기본 요소 숨기기 */
@@ -90,7 +86,7 @@ st.markdown("""
         color: #999;
     }
     
-    /* 타이머 - 애니메이션 제거 */
+    /* 타이머 */
     .timer-display {
         font-size: 5rem;
         font-weight: bold;
@@ -100,7 +96,7 @@ st.markdown("""
         font-family: 'Courier New', monospace;
     }
     
-    /* 호흡 원 - 부드러운 애니메이션 */
+    /* 호흡 원 */
     .breathing-circle {
         width: 200px;
         height: 200px;
@@ -181,10 +177,7 @@ if 'current_topic' not in st.session_state:
     st.session_state.current_topic = ''
 if 'breathing_done' not in st.session_state:
     st.session_state.breathing_done = False
-if 'timer_placeholder' not in st.session_state:
-    st.session_state.timer_placeholder = None
 if 'selected_quote' not in st.session_state:
-    # 세션 시작 시 한 번만 명언 선택
     st.session_state.selected_quote = None
 
 # 황농문 교수님 인용구
@@ -283,14 +276,10 @@ with st.sidebar:
     if not st.session_state.selected_quote:
         st.session_state.selected_quote = random.choice(QUOTES)
     
-    # Container로 고정 영역 생성
-    quote_container = st.container()
-    with quote_container:
-        st.info(f"💡 **오늘의 지혜**\n\n_{st.session_state.selected_quote}_\n\n- 황농문")
+    st.info(f"💡 **오늘의 지혜**\n\n_{st.session_state.selected_quote}_\n\n- 황농문")
 
 # 메인 콘텐츠
 if st.session_state.page == "home":
-    # 홈 페이지 내용 (고정된 컨테이너 사용)
     intro_container = st.container()
     with intro_container:
         st.markdown("## 🏠 환영합니다!")
@@ -370,7 +359,6 @@ elif st.session_state.page == "immersion":
         
         # 단계별 내용
         if st.session_state.immersion_step == 1:
-            # 1단계: 준비
             st.markdown("### 1️⃣ 몰입 준비")
             st.success("💡 준비 항목은 모두 선택사항입니다. 체크 없이도 다음 단계로 진행 가능합니다!")
             
@@ -402,7 +390,6 @@ elif st.session_state.page == "immersion":
                 st.rerun()
         
         elif st.session_state.immersion_step == 2:
-            # 2단계: 이완
             st.markdown("### 2️⃣ 의식적 이완")
             st.info("황농문 교수님: '이완된 집중'이 진정한 몰입의 시작입니다")
             
@@ -427,7 +414,6 @@ elif st.session_state.page == "immersion":
                     current_step = 0
                     
                     for round in range(rounds):
-                        # 들숨
                         for i in range(inhale):
                             current_step += 1
                             progress_bar.progress(current_step / total_steps)
@@ -441,7 +427,6 @@ elif st.session_state.page == "immersion":
                             """, unsafe_allow_html=True)
                             time.sleep(1)
                         
-                        # 날숨
                         for i in range(exhale):
                             current_step += 1
                             progress_bar.progress(current_step / total_steps)
@@ -468,7 +453,6 @@ elif st.session_state.page == "immersion":
                     st.rerun()
         
         elif st.session_state.immersion_step == 3:
-            # 3단계: 몰입
             st.markdown("### 3️⃣ 슬로싱킹 - 천천히 오래 생각하기")
             
             if not st.session_state.immersion_active:
@@ -493,22 +477,16 @@ elif st.session_state.page == "immersion":
                         st.rerun()
             
             else:
-                # 몰입 중 - 타이머 표시를 위한 컨테이너
                 timer_container = st.container()
-                
-                # 현재 경과 시간 계산
                 elapsed = time.time() - st.session_state.start_time
                 
-                # 타이머와 주제 표시
                 with timer_container:
-                    # 수동 타이머 업데이트 (자동 새로고침 없이)
                     col1, col2, col3 = st.columns([1, 2, 1])
                     with col2:
                         st.markdown(f"<div class='timer-display'>{format_time(elapsed)}</div>", unsafe_allow_html=True)
                     
                     st.markdown(f"#### 📝 주제: {st.session_state.current_topic}")
                 
-                # 생각 입력
                 thought = st.text_area(
                     "💭 떠오르는 생각을 자유롭게 기록하세요",
                     height=150,
@@ -529,13 +507,11 @@ elif st.session_state.page == "immersion":
                             st.rerun()
                 
                 with col2:
-                    # 타이머 수동 업데이트 버튼
                     if st.button("⏱️ 타이머 업데이트", use_container_width=True):
                         st.rerun()
                 
                 with col3:
                     if st.button("🏁 몰입 종료", type="secondary", use_container_width=True):
-                        # 세션 저장
                         final_duration = time.time() - st.session_state.start_time
                         session_data = {
                             "user": st.session_state.user_name,
@@ -546,28 +522,23 @@ elif st.session_state.page == "immersion":
                         }
                         save_session(session_data)
                         
-                        # 상태 초기화
                         st.session_state.immersion_active = False
                         st.session_state.immersion_step = 0
                         st.session_state.breathing_done = False
                         
-                        # 성공 메시지
                         st.success(f"🎉 몰입 완료! {format_time(final_duration)}")
                         st.balloons()
                         
-                        # 보고서 페이지로 자동 이동
-                        time.sleep(2)  # 잠시 대기
+                        time.sleep(2)
                         st.session_state.page = "report"
                         st.rerun()
                 
-                # 기록된 생각들 표시
                 if st.session_state.thoughts:
                     st.markdown("---")
                     st.markdown("#### 💭 기록된 생각들")
                     for i, t in enumerate(st.session_state.thoughts, 1):
                         st.markdown(f"**{i}.** [{t['time']}] {t['content']}")
                 
-                # 도움말
                 with st.expander("💡 몰입 도움말"):
                     st.markdown("""
                     - **타이머 업데이트**: 버튼을 눌러 시간을 확인하세요
@@ -600,7 +571,6 @@ elif st.session_state.page == "stats":
         with col4:
             st.metric("평균 시간", format_time(avg_time))
         
-        # 레벨 진행률
         st.markdown("### 📈 레벨 진행률")
         if level_num == 1:
             progress = (total_sessions / 5) * 100
@@ -613,7 +583,6 @@ elif st.session_state.page == "stats":
         else:
             st.success("🌳 최고 레벨 달성! 몰입 마스터입니다!")
         
-        # 최근 세션
         st.markdown("### 📝 최근 몰입 기록")
         recent_sessions = sorted(user_sessions, key=lambda x: x['date'], reverse=True)[:5]
         
@@ -645,7 +614,6 @@ elif st.session_state.page == "report":
             level, emoji, _ = get_user_level(len(user_sessions))
             total_time_today = sum(s.get('duration', 0) for s in today_sessions)
             
-            # 보고서 생성
             report_container = st.container()
             with report_container:
                 report = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -717,55 +685,60 @@ elif st.session_state.page == "help":
         ### 🎯 프로그램 특징
         
         **깜빡임 없는 안정적인 UI**
-        - 자동 새로고침 최소화로 편안한 사용 경험
+        - 자동 새로고침 완전 제거
         - 타이머는 수동 업데이트 버튼으로 확인
         - 모든 내용이 안정적으로 표시됨
         
-        ### 📱 황농문 교수님께 체험 제공 방법
+        ### 📱 사용 방법
         
-        **1. 온라인 배포 (권장)**
-        ```
-        1. GitHub에 코드 업로드
-        2. Streamlit Cloud에서 무료 배포
-        3. 생성된 URL 공유
-        ```
+        **1. 몰입 시작**
+        - 이름 입력 후 시작
+        - 3단계 자동 진행
+        - 준비 단계는 모두 선택사항
         
-        **2. 로컬 실행**
-        ```
-        1. Python 설치 (3.8 이상)
-        2. pip install streamlit
-        3. streamlit run app.py
-        4. 자동으로 열리는 브라우저에서 체험
-        ```
+        **2. 타이머 사용**
+        - "타이머 업데이트" 버튼으로 시간 확인
+        - 생각 기록 후 자동 저장
+        - 몰입 종료 시 보고서 자동 생성
         
-        ### 💡 프로그램 빠른 실행 (Windows)
+        **3. 레벨 시스템**
+        - 🌱 초급: 0-4회
+        - 🌿 중급: 5-19회
+        - 🌳 고급: 20회 이상
         
-        **실행 파일 만들기:**
-        1. 메모장 열기
-        2. 아래 내용 입력:
-        ```batch
-        @echo off
-        cd 프로그램경로
-        streamlit run app.py
-        ```
-        3. "몰입시작.bat"로 저장
-        4. 더블클릭으로 실행
+        ### 💾 데이터 저장
         
-        ### 📈 레벨 시스템
-        
-        - 🌱 **초급** (0-4회): 기초 몰입 훈련
-        - 🌿 **중급** (5-19회): 심화 몰입 훈련
-        - 🌳 **고급** (20회+): 몰입 마스터
+        - 모든 몰입 기록은 자동 저장됩니다
+        - 브라우저를 닫아도 기록이 유지됩니다
+        - 보고서 다운로드 기능 제공
         
         ### 🔧 문제 해결
         
-        **프로그램이 느린 경우:**
-        - 타이머 자동 새로고침 비활성화됨
-        - "타이머 업데이트" 버튼으로 시간 확인
+        **메뉴가 작동하지 않을 때:**
+        - 브라우저 새로고침 (F5 또는 Ctrl+R)
+        - 다른 브라우저로 접속
+        - 모바일에서도 사용 가능
         
-        **데이터가 저장되지 않는 경우:**
-        - immersion_data 폴더 확인
-        - 쓰기 권한 확인
+        **타이머가 업데이트되지 않을 때:**
+        - "타이머 업데이트" 버튼 클릭
+        - 수동 업데이트 방식으로 안정성 확보
+        
+        ### 📧 황농문 교수님께 공유
+        
+        **URL 공유:**
+        ```
+        https://immersion-program.streamlit.app
+        ```
+        
+        별도 설치 없이 위 링크로 바로 체험 가능합니다.
+        
+        ### 💡 몰입의 핵심
+        
+        > "몰입은 긴장이 아니라 이완입니다"
+        > 
+        > "천천히 오래 생각하는 슬로싱킹을 실천하세요"
+        > 
+        > - 황농문 교수님
         """)
 
 # 푸터
