@@ -1,4 +1,4 @@
-# app.py - 직장인 몰입 체험 프로그램 (최종 안정화 버전)
+# app.py - 직장인 몰입 체험 프로그램 (완전 수정판)
 import streamlit as st
 import time
 from datetime import datetime
@@ -54,6 +54,12 @@ st.markdown("""
     footer {visibility: hidden;}
     .block-container {padding-top: 2rem;}
     
+    /* 페이지 높이 고정 */
+    .main > div {
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+    
     /* 진행 단계 표시 */
     .step-container {
         display: flex;
@@ -69,7 +75,6 @@ st.markdown("""
         padding: 1rem;
         margin: 0 0.5rem;
         border-radius: 10px;
-        transition: all 0.3s;
     }
     .step-active {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -96,27 +101,6 @@ st.markdown("""
         font-family: 'Courier New', monospace;
     }
     
-    /* 호흡 원 */
-    .breathing-circle {
-        width: 200px;
-        height: 200px;
-        border-radius: 50%;
-        margin: 0 auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 4rem;
-        transition: all 0.5s ease;
-    }
-    .breathe-in {
-        background: radial-gradient(circle, #87CEEB, #1976D2);
-        transform: scale(1.2);
-    }
-    .breathe-out {
-        background: radial-gradient(circle, #FFB6C1, #FF69B4);
-        transform: scale(0.8);
-    }
-    
     /* 버튼 스타일 */
     .stButton>button {
         width: 100%;
@@ -124,11 +108,6 @@ st.markdown("""
         font-size: 1.1rem;
         font-weight: bold;
         border-radius: 10px;
-        transition: all 0.3s;
-    }
-    .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
     
     /* 레벨 배지 */
@@ -151,6 +130,13 @@ st.markdown("""
     .level-advanced { 
         background: linear-gradient(135deg, #9C27B0, #BA68C8); 
         color: white; 
+    }
+    
+    /* 라디오 버튼 스타일 개선 */
+    .stRadio > div {
+        background-color: #f8f9fa;
+        padding: 0.5rem;
+        border-radius: 10px;
     }
     
     /* Spinner 숨기기 */
@@ -241,20 +227,28 @@ st.markdown("---")
 with st.sidebar:
     st.markdown("### 📌 메뉴")
     
-    menu_items = {
-        "🏠 홈": "home",
-        "🎯 몰입 시작": "immersion",
-        "📊 나의 통계": "stats",
-        "📝 보고서": "report",
-        "ℹ️ 도움말": "help"
-    }
+    # 라디오 버튼으로 변경 (더 안정적)
+    menu_options = ["🏠 홈", "🎯 몰입 시작", "📊 나의 통계", "📝 보고서", "ℹ️ 도움말"]
+    selected_menu = st.radio(
+        "페이지 선택",
+        menu_options,
+        key="menu_radio",
+        label_visibility="collapsed"
+    )
     
-    for label, page_id in menu_items.items():
-        if st.button(label, key=f"nav_{page_id}", use_container_width=True):
-            st.session_state.page = page_id
-            if page_id == "immersion" and st.session_state.user_name:
-                st.session_state.immersion_step = 1
-            st.rerun()
+    # 선택된 메뉴에 따라 페이지 설정
+    if "홈" in selected_menu:
+        st.session_state.page = "home"
+    elif "몰입 시작" in selected_menu:
+        st.session_state.page = "immersion"
+        if st.session_state.user_name and st.session_state.immersion_step == 0:
+            st.session_state.immersion_step = 1
+    elif "통계" in selected_menu:
+        st.session_state.page = "stats"
+    elif "보고서" in selected_menu:
+        st.session_state.page = "report"
+    elif "도움말" in selected_menu:
+        st.session_state.page = "help"
     
     st.markdown("---")
     
@@ -280,42 +274,40 @@ with st.sidebar:
 
 # 메인 콘텐츠
 if st.session_state.page == "home":
-    intro_container = st.container()
-    with intro_container:
-        st.markdown("## 🏠 환영합니다!")
+    st.markdown("## 🏠 환영합니다!")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("""
+        ### 📖 프로그램 소개
         
-        col1, col2 = st.columns(2)
+        이 프로그램은 **황농문 교수님의 몰입 이론**을 바탕으로
+        직장인들이 일상에서 쉽게 몰입을 체험할 수 있도록 설계되었습니다.
         
-        with col1:
-            st.markdown("""
-            ### 📖 프로그램 소개
-            
-            이 프로그램은 **황농문 교수님의 몰입 이론**을 바탕으로
-            직장인들이 일상에서 쉽게 몰입을 체험할 수 있도록 설계되었습니다.
-            
-            #### ✨ 핵심 기능
-            - 🧘 **의식적 이완** - 4-8 호흡법
-            - 💭 **슬로싱킹 훈련** - 천천히 오래 생각하기
-            - ⏱️ **실시간 타이머** - 자동 측정
-            - 📈 **레벨 시스템** - 성장 가시화
-            """)
+        #### ✨ 핵심 기능
+        - 🧘 **의식적 이완** - 4-8 호흡법
+        - 💭 **슬로싱킹 훈련** - 천천히 오래 생각하기
+        - ⏱️ **실시간 타이머** - 자동 측정
+        - 📈 **레벨 시스템** - 성장 가시화
+        """)
+    
+    with col2:
+        st.markdown("""
+        ### 🎯 몰입의 3단계
         
-        with col2:
-            st.markdown("""
-            ### 🎯 몰입의 3단계
-            
-            **1️⃣ 준비 단계** (선택)
-            - 가벼운 스트레칭
-            - 물 한 모금
-            
-            **2️⃣ 이완 단계** 
-            - 호흡 명상으로 마음 안정
-            
-            **3️⃣ 몰입 단계**
-            - 주제에 깊이 집중
-            
-            > **"몰입은 긴장이 아니라 이완입니다"**
-            """)
+        **1️⃣ 준비 단계** (선택)
+        - 가벼운 스트레칭
+        - 물 한 모금
+        
+        **2️⃣ 이완 단계** 
+        - 호흡 명상으로 마음 안정
+        
+        **3️⃣ 몰입 단계**
+        - 주제에 깊이 집중
+        
+        > **"몰입은 긴장이 아니라 이완입니다"**
+        """)
     
     if not st.session_state.user_name:
         st.markdown("---")
@@ -328,14 +320,12 @@ if st.session_state.page == "home":
                 save_user_data(user_data)
                 st.session_state.page = "immersion"
                 st.session_state.immersion_step = 1
-                st.rerun()
 
 elif st.session_state.page == "immersion":
     if not st.session_state.user_name:
         st.warning("먼저 홈에서 이름을 입력해주세요.")
         if st.button("홈으로 가기"):
             st.session_state.page = "home"
-            st.rerun()
     else:
         st.markdown("## 🎯 몰입 훈련")
         
@@ -387,7 +377,6 @@ elif st.session_state.page == "immersion":
             
             if st.button("다음 단계로 →", type="primary", use_container_width=True):
                 st.session_state.immersion_step = 2
-                st.rerun()
         
         elif st.session_state.immersion_step == 2:
             st.markdown("### 2️⃣ 의식적 이완")
@@ -407,50 +396,51 @@ elif st.session_state.page == "immersion":
             
             with col1:
                 if st.button("🧘 호흡 명상 시작", type="primary", use_container_width=True):
-                    placeholder = st.empty()
-                    progress_bar = st.progress(0)
-                    
-                    total_steps = rounds * (inhale + exhale)
-                    current_step = 0
-                    
-                    for round in range(rounds):
-                        for i in range(inhale):
-                            current_step += 1
-                            progress_bar.progress(current_step / total_steps)
-                            
-                            placeholder.markdown(f"""
-                            <div style='text-align: center; padding: 2rem;'>
-                                <div class='breathing-circle breathe-in'>🫁</div>
-                                <h2 style='margin-top: 1rem;'>숨을 들이마시세요</h2>
-                                <h3>라운드 {round+1}/{rounds} | {i+1}/{inhale}초</h3>
-                            </div>
-                            """, unsafe_allow_html=True)
-                            time.sleep(1)
+                    # 컨테이너 생성으로 레이아웃 고정
+                    breath_container = st.container()
+                    with breath_container:
+                        placeholder = st.empty()
+                        progress_bar = st.progress(0)
                         
-                        for i in range(exhale):
-                            current_step += 1
-                            progress_bar.progress(current_step / total_steps)
+                        total_steps = rounds * (inhale + exhale)
+                        current_step = 0
+                        
+                        for round in range(rounds):
+                            for i in range(inhale):
+                                current_step += 1
+                                progress_bar.progress(current_step / total_steps)
+                                
+                                placeholder.markdown(f"""
+                                <div style='text-align: center; height: 300px; padding: 2rem; background: #f0f8ff; border-radius: 20px; margin: 1rem 0;'>
+                                    <div style='font-size: 6rem; margin: 2rem 0;'>🫁</div>
+                                    <h2 style='color: #1976D2;'>숨을 들이마시세요</h2>
+                                    <h3 style='color: #666;'>라운드 {round+1}/{rounds} | {i+1}/{inhale}초</h3>
+                                </div>
+                                """, unsafe_allow_html=True)
+                                time.sleep(1)
                             
-                            placeholder.markdown(f"""
-                            <div style='text-align: center; padding: 2rem;'>
-                                <div class='breathing-circle breathe-out'>😮‍💨</div>
-                                <h2 style='margin-top: 1rem;'>천천히 내쉬세요</h2>
-                                <h3>라운드 {round+1}/{rounds} | {i+1}/{exhale}초</h3>
-                            </div>
-                            """, unsafe_allow_html=True)
-                            time.sleep(1)
-                    
-                    placeholder.empty()
-                    progress_bar.empty()
-                    st.success("✅ 의식적 이완 완료!")
-                    time.sleep(1)
-                    st.session_state.immersion_step = 3
-                    st.rerun()
+                            for i in range(exhale):
+                                current_step += 1
+                                progress_bar.progress(current_step / total_steps)
+                                
+                                placeholder.markdown(f"""
+                                <div style='text-align: center; height: 300px; padding: 2rem; background: #fff0f5; border-radius: 20px; margin: 1rem 0;'>
+                                    <div style='font-size: 6rem; margin: 2rem 0;'>😮‍💨</div>
+                                    <h2 style='color: #FF69B4;'>천천히 내쉬세요</h2>
+                                    <h3 style='color: #666;'>라운드 {round+1}/{rounds} | {i+1}/{exhale}초</h3>
+                                </div>
+                                """, unsafe_allow_html=True)
+                                time.sleep(1)
+                        
+                        placeholder.empty()
+                        progress_bar.empty()
+                        st.success("✅ 의식적 이완 완료!")
+                        time.sleep(1)
+                        st.session_state.immersion_step = 3
             
             with col2:
                 if st.button("건너뛰기 →", type="secondary", use_container_width=True):
                     st.session_state.immersion_step = 3
-                    st.rerun()
         
         elif st.session_state.immersion_step == 3:
             st.markdown("### 3️⃣ 슬로싱킹 - 천천히 오래 생각하기")
@@ -474,18 +464,16 @@ elif st.session_state.page == "immersion":
                         st.session_state.start_time = time.time()
                         st.session_state.current_topic = selected_topic
                         st.session_state.thoughts = []
-                        st.rerun()
             
             else:
-                timer_container = st.container()
                 elapsed = time.time() - st.session_state.start_time
                 
-                with timer_container:
-                    col1, col2, col3 = st.columns([1, 2, 1])
-                    with col2:
-                        st.markdown(f"<div class='timer-display'>{format_time(elapsed)}</div>", unsafe_allow_html=True)
-                    
-                    st.markdown(f"#### 📝 주제: {st.session_state.current_topic}")
+                # 타이머 표시
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    st.markdown(f"<div class='timer-display'>{format_time(elapsed)}</div>", unsafe_allow_html=True)
+                
+                st.markdown(f"#### 📝 주제: {st.session_state.current_topic}")
                 
                 thought = st.text_area(
                     "💭 떠오르는 생각을 자유롭게 기록하세요",
@@ -504,11 +492,10 @@ elif st.session_state.page == "immersion":
                                 "content": thought
                             })
                             st.success("기록됨!")
-                            st.rerun()
                 
                 with col2:
                     if st.button("⏱️ 타이머 업데이트", use_container_width=True):
-                        st.rerun()
+                        pass  # 페이지가 다시 렌더링되면서 타이머 업데이트
                 
                 with col3:
                     if st.button("🏁 몰입 종료", type="secondary", use_container_width=True):
@@ -531,7 +518,6 @@ elif st.session_state.page == "immersion":
                         
                         time.sleep(2)
                         st.session_state.page = "report"
-                        st.rerun()
                 
                 if st.session_state.thoughts:
                     st.markdown("---")
@@ -614,9 +600,7 @@ elif st.session_state.page == "report":
             level, emoji, _ = get_user_level(len(user_sessions))
             total_time_today = sum(s.get('duration', 0) for s in today_sessions)
             
-            report_container = st.container()
-            with report_container:
-                report = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            report = f"""━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📝 몰입 실천 보고서
 
 📅 작성일: {datetime.now().strftime('%Y년 %m월 %d일 %H:%M')}
@@ -629,20 +613,20 @@ elif st.session_state.page == "report":
 • 누적 몰입: {len(user_sessions)}회
 
 【세부 내용】"""
+            
+            for i, session in enumerate(today_sessions, 1):
+                topic = session.get('topic', '')
+                duration = format_time(session.get('duration', 0))
+                thoughts = session.get('thoughts', [])
                 
-                for i, session in enumerate(today_sessions, 1):
-                    topic = session.get('topic', '')
-                    duration = format_time(session.get('duration', 0))
-                    thoughts = session.get('thoughts', [])
-                    
-                    report += f"\n\n{i}. 주제: {topic}\n   시간: {duration}"
-                    
-                    if thoughts:
-                        report += "\n   기록:"
-                        for t in thoughts:
-                            report += f"\n   - [{t['time']}] {t['content']}"
+                report += f"\n\n{i}. 주제: {topic}\n   시간: {duration}"
                 
-                report += f"""
+                if thoughts:
+                    report += "\n   기록:"
+                    for t in thoughts:
+                        report += f"\n   - [{t['time']}] {t['content']}"
+            
+            report += f"""
 
 【오늘의 성장】
 황농문 교수님의 '1초 원칙'을 실천하며
@@ -650,96 +634,92 @@ elif st.session_state.page == "report":
 
 {st.session_state.user_name} 올림
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"""
-                
-                st.text_area("보고서 내용", report, height=400, key="report_text")
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.download_button(
-                        "📥 보고서 다운로드",
-                        report,
-                        file_name=f"몰입보고서_{datetime.now().strftime('%Y%m%d')}.txt",
-                        mime="text/plain",
-                        use_container_width=True
-                    )
-                
-                with col2:
-                    if st.button("🎯 새 몰입 시작", type="primary", use_container_width=True):
-                        st.session_state.page = "immersion"
-                        st.session_state.immersion_step = 1
-                        st.rerun()
+            
+            st.text_area("보고서 내용", report, height=400, key="report_text")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.download_button(
+                    "📥 보고서 다운로드",
+                    report,
+                    file_name=f"몰입보고서_{datetime.now().strftime('%Y%m%d')}.txt",
+                    mime="text/plain",
+                    use_container_width=True
+                )
+            
+            with col2:
+                if st.button("🎯 새 몰입 시작", type="primary", use_container_width=True):
+                    st.session_state.page = "immersion"
+                    st.session_state.immersion_step = 1
         else:
             st.info("오늘의 몰입 기록이 없습니다.")
             if st.button("🎯 몰입 시작하기", type="primary", use_container_width=True):
                 st.session_state.page = "immersion"
                 st.session_state.immersion_step = 1
-                st.rerun()
 
 elif st.session_state.page == "help":
-    help_container = st.container()
-    with help_container:
-        st.markdown("""
-        ## ℹ️ 사용 가이드
-        
-        ### 🎯 프로그램 특징
-        
-        **깜빡임 없는 안정적인 UI**
-        - 자동 새로고침 완전 제거
-        - 타이머는 수동 업데이트 버튼으로 확인
-        - 모든 내용이 안정적으로 표시됨
-        
-        ### 📱 사용 방법
-        
-        **1. 몰입 시작**
-        - 이름 입력 후 시작
-        - 3단계 자동 진행
-        - 준비 단계는 모두 선택사항
-        
-        **2. 타이머 사용**
-        - "타이머 업데이트" 버튼으로 시간 확인
-        - 생각 기록 후 자동 저장
-        - 몰입 종료 시 보고서 자동 생성
-        
-        **3. 레벨 시스템**
-        - 🌱 초급: 0-4회
-        - 🌿 중급: 5-19회
-        - 🌳 고급: 20회 이상
-        
-        ### 💾 데이터 저장
-        
-        - 모든 몰입 기록은 자동 저장됩니다
-        - 브라우저를 닫아도 기록이 유지됩니다
-        - 보고서 다운로드 기능 제공
-        
-        ### 🔧 문제 해결
-        
-        **메뉴가 작동하지 않을 때:**
-        - 브라우저 새로고침 (F5 또는 Ctrl+R)
-        - 다른 브라우저로 접속
-        - 모바일에서도 사용 가능
-        
-        **타이머가 업데이트되지 않을 때:**
-        - "타이머 업데이트" 버튼 클릭
-        - 수동 업데이트 방식으로 안정성 확보
-        
-        ### 📧 황농문 교수님께 공유
-        
-        **URL 공유:**
-        ```
-        https://immersion-program.streamlit.app
-        ```
-        
-        별도 설치 없이 위 링크로 바로 체험 가능합니다.
-        
-        ### 💡 몰입의 핵심
-        
-        > "몰입은 긴장이 아니라 이완입니다"
-        > 
-        > "천천히 오래 생각하는 슬로싱킹을 실천하세요"
-        > 
-        > - 황농문 교수님
-        """)
+    st.markdown("""
+    ## ℹ️ 사용 가이드
+    
+    ### 🎯 프로그램 특징
+    
+    **깜빡임 없는 안정적인 UI**
+    - 자동 새로고침 완전 제거
+    - 타이머는 수동 업데이트 버튼으로 확인
+    - 모든 내용이 안정적으로 표시됨
+    
+    ### 📱 사용 방법
+    
+    **1. 몰입 시작**
+    - 이름 입력 후 시작
+    - 3단계 자동 진행
+    - 준비 단계는 모두 선택사항
+    
+    **2. 타이머 사용**
+    - "타이머 업데이트" 버튼으로 시간 확인
+    - 생각 기록 후 자동 저장
+    - 몰입 종료 시 보고서 자동 생성
+    
+    **3. 레벨 시스템**
+    - 🌱 초급: 0-4회
+    - 🌿 중급: 5-19회
+    - 🌳 고급: 20회 이상
+    
+    ### 💾 데이터 저장
+    
+    - 모든 몰입 기록은 자동 저장됩니다
+    - 브라우저를 닫아도 기록이 유지됩니다
+    - 보고서 다운로드 기능 제공
+    
+    ### 🔧 문제 해결
+    
+    **메뉴가 작동하지 않을 때:**
+    - 브라우저 새로고침 (F5 또는 Ctrl+R)
+    - 다른 브라우저로 접속
+    - 모바일에서도 사용 가능
+    
+    **타이머가 업데이트되지 않을 때:**
+    - "타이머 업데이트" 버튼 클릭
+    - 수동 업데이트 방식으로 안정성 확보
+    
+    ### 📧 황농문 교수님께 공유
+    
+    **URL 공유:**
+    ```
+    https://immersion-program.streamlit.app
+    ```
+    
+    별도 설치 없이 위 링크로 바로 체험 가능합니다.
+    
+    ### 💡 몰입의 핵심
+    
+    > "몰입은 긴장이 아니라 이완입니다"
+    > 
+    > "천천히 오래 생각하는 슬로싱킹을 실천하세요"
+    > 
+    > - 황농문 교수님
+    """)
 
 # 푸터
 st.markdown("---")
