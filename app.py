@@ -263,6 +263,18 @@ with st.sidebar:
         
         total_time = sum(s.get('duration', 0) for s in user_sessions)
         st.markdown(f"**누적 시간:** {format_time(total_time)}")
+        
+        st.markdown("---")
+        
+        # 로그아웃 버튼 추가
+        if st.button("🚪 로그아웃", use_container_width=True, type="secondary"):
+            st.session_state.user_name = ''
+            st.session_state.page = 'home'
+            st.session_state.immersion_step = 0
+            st.session_state.immersion_active = False
+            st.session_state.thoughts = []
+            st.session_state.current_topic = ''
+            st.experimental_rerun() if hasattr(st, 'experimental_rerun') else st.rerun()
     
     st.markdown("---")
     
