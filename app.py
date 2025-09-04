@@ -658,6 +658,7 @@ elif st.session_state.page == "report":
             if st.button("🎯 몰입 시작하기", type="primary", use_container_width=True):
                 st.session_state.page = "immersion"
                 st.session_state.immersion_step = 1
+                st.experimental_rerun() if hasattr(st, 'experimental_rerun') else st.rerun()
 
 elif st.session_state.page == "help":
     st.markdown("""
