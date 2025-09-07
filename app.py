@@ -2,7 +2,7 @@
 # Created by 갯버들
 # Based on 황농문 교수님's 몰입 이론
 # GitHub: https://github.com/sjks007-art/immersion-program
-# Version: 2.0 - 의식의 무대 기능 추가
+# Version: 2.1 - 의식의 무대 기능 통합 및 버그 수정
 
 import streamlit as st
 import time
@@ -138,7 +138,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 세션 상태 초기화 (기존 + 추가)
+# 세션 상태 초기화
 if 'user_name' not in st.session_state:
     st.session_state.user_name = ""
 if 'user_level' not in st.session_state:
@@ -149,8 +149,6 @@ if 'total_time' not in st.session_state:
     st.session_state.total_time = 0
 if 'daily_sessions' not in st.session_state:
     st.session_state.daily_sessions = []
-    
-# 의식의 무대 관련 상태
 if 'stage_active' not in st.session_state:
     st.session_state.stage_active = False
 if 'focus_topic' not in st.session_state:
@@ -161,6 +159,8 @@ if 'distractions' not in st.session_state:
     st.session_state.distractions = []
 if 'focus_notes' not in st.session_state:
     st.session_state.focus_notes = ""
+if 'duration' not in st.session_state:
+    st.session_state.duration = 300  # 기본 5분
 
 # 응원 메시지 풀
 ENCOURAGEMENT_MESSAGES = [
@@ -180,9 +180,12 @@ if not st.session_state.user_name:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         name = st.text_input("닉네임을 입력하세요", placeholder="예: 갯버들")
-        if st.button("시작하기", type="primary", use_container_width=True) and name:
-            st.session_state.user_name = name
-            st.rerun()
+        if st.button("시작하기", type="primary", use_container_width=True):
+            if name:
+                st.session_state.user_name = name
+                st.rerun()
+            else:
+                st.error("닉네임을 입력해주세요!")
 else:
     # 환영 메시지
     st.success(f"환영합니다, {st.session_state.user_name}님! " + random.choice(ENCOURAGEMENT_MESSAGES))
@@ -216,31 +219,38 @@ else:
                 for topic in topics:
                     st.write(f"• {topic}")
             
-            topic = st.text_input(
+            # 주제 입력
+            topic_input = st.text_input(
                 "집중할 주제를 입력하세요:",
                 placeholder="예: 프로젝트 아이디어 구상",
-                key="topic_input"
+                key="topic_input_field"
             )
             
+            # 시간 선택
             col1, col2 = st.columns(2)
             with col1:
-                duration = st.selectbox(
+                duration_choice = st.selectbox(
                     "몰입 시간:",
                     options=[5, 10, 15, 20, 25, 30],
                     index=0,
-                    format_func=lambda x: f"{x}분"
+                    format_func=lambda x: f"{x}분",
+                    key="duration_select"
                 )
             
             with col2:
-                if st.button("🎭 무대 조명 켜기", type="primary", use_container_width=True, disabled=not topic):
-                    if topic:
-                        st.session_state.focus_topic = topic
+                # 버튼 클릭 처리
+                if st.button("🎭 무대 조명 켜기", type="primary", use_container_width=True):
+                    if topic_input and topic_input.strip():
+                        # 세션 상태 업데이트
+                        st.session_state.focus_topic = topic_input
                         st.session_state.stage_active = True
                         st.session_state.start_time = time.time()
-                        st.session_state.duration = duration * 60
+                        st.session_state.duration = duration_choice * 60
                         st.session_state.distractions = []
                         st.session_state.focus_notes = ""
                         st.rerun()
+                    else:
+                        st.error("⚠️ 집중할 주제를 입력해주세요!")
             
             # 무대 미리보기
             st.markdown("""
@@ -256,135 +266,168 @@ else:
         
         else:
             # 몰입 진행 중
-            elapsed = time.time() - st.session_state.start_time
-            remaining = st.session_state.duration - elapsed
-            
-            if remaining > 0:
-                # 타이머 표시
-                mins, secs = divmod(int(remaining), 60)
-                timer_display = f"{mins:02d}:{secs:02d}"
+            if st.session_state.start_time:
+                elapsed = time.time() - st.session_state.start_time
+                remaining = st.session_state.duration - elapsed
                 
-                # 무대 표시
-                st.markdown(f"""
-                <div class="stage-container">
-                    <div class="timer-display">{timer_display}</div>
-                    <div class="spotlight">
-                        <div class="focus-topic">
-                            💡 {st.session_state.focus_topic}
+                if remaining > 0:
+                    # 타이머 표시
+                    mins, secs = divmod(int(remaining), 60)
+                    timer_display = f"{mins:02d}:{secs:02d}"
+                    
+                    # 무대 표시
+                    st.markdown(f"""
+                    <div class="stage-container">
+                        <div class="timer-display">{timer_display}</div>
+                        <div class="spotlight">
+                            <div class="focus-topic">
+                                💡 {st.session_state.focus_topic}
+                            </div>
                         </div>
+                        <p style="text-align: center; color: #666; margin-top: 20px;">
+                            무대 위의 주제에만 집중하세요
+                        </p>
                     </div>
-                    <p style="text-align: center; color: #666; margin-top: 20px;">
-                        무대 위의 주제에만 집중하세요
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # 잡념 처리 섹션
-                st.markdown("#### 🎫 잡념 보관함")
-                st.markdown("*무대에 올라온 관객(잡념)을 관객석으로 보내세요*")
-                
-                col1, col2 = st.columns([3, 1])
-                with col1:
-                    distraction = st.text_input(
-                        "떠오른 잡념:",
-                        key=f"distraction_input_{len(st.session_state.distractions)}",
-                        placeholder="잡념을 적고 Enter"
+                    """, unsafe_allow_html=True)
+                    
+                    # 잡념 처리 섹션
+                    st.markdown("#### 🎫 잡념 보관함")
+                    st.markdown("*무대에 올라온 관객(잡념)을 관객석으로 보내세요*")
+                    
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        distraction = st.text_input(
+                            "떠오른 잡념:",
+                            key=f"distraction_input_{len(st.session_state.distractions)}",
+                            placeholder="잡념을 적고 Enter 또는 보관 버튼"
+                        )
+                    with col2:
+                        if st.button("📌 보관", key="save_distraction"):
+                            if distraction and distraction.strip():
+                                st.session_state.distractions.append(distraction)
+                                st.rerun()
+                    
+                    # 보관된 잡념 표시
+                    if st.session_state.distractions:
+                        st.markdown("**관객석으로 보낸 잡념들:**")
+                        cols = st.columns(3)
+                        for i, d in enumerate(st.session_state.distractions):
+                            with cols[i % 3]:
+                                st.markdown(f'<div class="postit">📌 {d}</div>', 
+                                          unsafe_allow_html=True)
+                    
+                    # 생각 기록
+                    st.markdown("#### 📝 몰입 노트")
+                    notes_input = st.text_area(
+                        "주제에 대한 생각을 자유롭게 적으세요:",
+                        value=st.session_state.focus_notes,
+                        height=150,
+                        placeholder="판단하지 말고 떠오르는 대로...",
+                        key="notes_area_input"
                     )
-                with col2:
-                    if st.button("📌 보관", key="save_distraction") and distraction:
-                        st.session_state.distractions.append(distraction)
-                        st.rerun()
-                
-                # 보관된 잡념 표시
-                if st.session_state.distractions:
-                    st.markdown("**관객석으로 보낸 잡념들:**")
-                    cols = st.columns(3)
-                    for i, d in enumerate(st.session_state.distractions):
-                        with cols[i % 3]:
-                            st.markdown(f'<div class="postit">📌 {d}</div>', 
-                                      unsafe_allow_html=True)
-                
-                # 생각 기록
-                st.markdown("#### 📝 몰입 노트")
-                st.session_state.focus_notes = st.text_area(
-                    "주제에 대한 생각을 자유롭게 적으세요:",
-                    value=st.session_state.focus_notes,
-                    height=150,
-                    key="notes_area",
-                    placeholder="판단하지 말고 떠오르는 대로..."
-                )
-                
-                # 종료 버튼
-                col1, col2, col3 = st.columns([1, 1, 1])
-                with col2:
-                    if st.button("🏁 몰입 종료", type="secondary", use_container_width=True):
-                        remaining = 0
-                
-                # 자동 새로고침
-                time.sleep(1)
-                st.rerun()
-            
-            else:
-                # 몰입 완료
-                st.balloons()
-                st.success("🎉 몰입 세션이 완료되었습니다!")
-                
-                # 세션 저장
-                duration_mins = st.session_state.duration // 60
-                session_data = {
-                    "date": datetime.now().strftime("%Y-%m-%d"),
-                    "time": datetime.now().strftime("%H:%M"),
-                    "topic": st.session_state.focus_topic,
-                    "duration": duration_mins,
-                    "distractions": len(st.session_state.distractions),
-                    "distraction_list": st.session_state.distractions,
-                    "notes": st.session_state.focus_notes,
-                    "level": st.session_state.user_level
-                }
-                
-                st.session_state.daily_sessions.append(session_data)
-                st.session_state.total_sessions += 1
-                st.session_state.total_time += duration_mins
-                
-                # 레벨 업데이트
-                if st.session_state.total_time >= 300:
-                    st.session_state.user_level = "고급"
-                elif st.session_state.total_time >= 100:
-                    st.session_state.user_level = "중급"
-                
-                # 결과 표시
-                st.markdown("### 🎭 무대를 내리며")
-                
-                col1, col2, col3 = st.columns(3)
-                with col1:
-                    st.metric("몰입 시간", f"{duration_mins}분")
-                with col2:
-                    st.metric("처리한 잡념", f"{len(st.session_state.distractions)}개")
-                with col3:
-                    st.metric("현재 레벨", st.session_state.user_level)
-                
-                if st.session_state.focus_notes:
-                    with st.expander("📝 오늘의 몰입 노트 보기"):
-                        st.write(st.session_state.focus_notes)
-                
-                if st.session_state.distractions:
-                    with st.expander("🎫 관객석으로 보낸 잡념들"):
-                        for d in st.session_state.distractions:
-                            st.write(f"• {d}")
-                
-                # 16시간 후 알림
-                st.info("""
-                💡 **황농문 교수님의 16시간 법칙**
-                
-                오늘 집중한 '{}'은(는) 잠재의식이 계속 처리합니다.
-                내일 아침에 다시 생각해보면 새로운 아이디어가 떠오를 거예요!
-                """.format(st.session_state.focus_topic[:30]))
-                
-                # 초기화 버튼
-                if st.button("🔄 새로운 몰입 시작", type="primary", use_container_width=True):
-                    st.session_state.stage_active = False
-                    st.session_state.focus_topic = ""
+                    st.session_state.focus_notes = notes_input
+                    
+                    # 종료 버튼
+                    col1, col2, col3 = st.columns([1, 1, 1])
+                    with col2:
+                        if st.button("🏁 몰입 종료", type="secondary", use_container_width=True):
+                            # 몰입 완료 처리
+                            duration_mins = int(st.session_state.duration / 60)
+                            session_data = {
+                                "date": datetime.now().strftime("%Y-%m-%d"),
+                                "time": datetime.now().strftime("%H:%M"),
+                                "topic": st.session_state.focus_topic,
+                                "duration": duration_mins,
+                                "distractions": len(st.session_state.distractions),
+                                "distraction_list": st.session_state.distractions.copy(),
+                                "notes": st.session_state.focus_notes,
+                                "level": st.session_state.user_level
+                            }
+                            
+                            st.session_state.daily_sessions.append(session_data)
+                            st.session_state.total_sessions += 1
+                            st.session_state.total_time += duration_mins
+                            
+                            # 레벨 업데이트
+                            if st.session_state.total_time >= 300:
+                                st.session_state.user_level = "고급"
+                            elif st.session_state.total_time >= 100:
+                                st.session_state.user_level = "중급"
+                            
+                            # 세션 종료
+                            st.session_state.stage_active = False
+                            st.session_state.start_time = None
+                            st.rerun()
+                    
+                    # 자동 새로고침
+                    time.sleep(1)
                     st.rerun()
+                
+                else:
+                    # 시간 초과 - 몰입 완료
+                    st.balloons()
+                    
+                    # 세션 저장
+                    duration_mins = int(st.session_state.duration / 60)
+                    session_data = {
+                        "date": datetime.now().strftime("%Y-%m-%d"),
+                        "time": datetime.now().strftime("%H:%M"),
+                        "topic": st.session_state.focus_topic,
+                        "duration": duration_mins,
+                        "distractions": len(st.session_state.distractions),
+                        "distraction_list": st.session_state.distractions.copy(),
+                        "notes": st.session_state.focus_notes,
+                        "level": st.session_state.user_level
+                    }
+                    
+                    st.session_state.daily_sessions.append(session_data)
+                    st.session_state.total_sessions += 1
+                    st.session_state.total_time += duration_mins
+                    
+                    # 레벨 업데이트
+                    if st.session_state.total_time >= 300:
+                        st.session_state.user_level = "고급"
+                    elif st.session_state.total_time >= 100:
+                        st.session_state.user_level = "중급"
+                    
+                    # 완료 메시지
+                    st.success("🎉 몰입 세션이 완료되었습니다!")
+                    
+                    # 결과 표시
+                    st.markdown("### 🎭 무대를 내리며")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("몰입 시간", f"{duration_mins}분")
+                    with col2:
+                        st.metric("처리한 잡념", f"{len(st.session_state.distractions)}개")
+                    with col3:
+                        st.metric("현재 레벨", st.session_state.user_level)
+                    
+                    if st.session_state.focus_notes:
+                        with st.expander("📝 오늘의 몰입 노트 보기"):
+                            st.write(st.session_state.focus_notes)
+                    
+                    if st.session_state.distractions:
+                        with st.expander("🎫 관객석으로 보낸 잡념들"):
+                            for d in st.session_state.distractions:
+                                st.write(f"• {d}")
+                    
+                    # 16시간 후 알림
+                    st.info(f"""
+                    💡 **황농문 교수님의 16시간 법칙**
+                    
+                    오늘 집중한 '{st.session_state.focus_topic[:30]}'은(는) 
+                    잠재의식이 계속 처리합니다.
+                    내일 아침에 다시 생각해보면 새로운 아이디어가 떠오를 거예요!
+                    """)
+                    
+                    # 초기화 버튼
+                    if st.button("🔄 새로운 몰입 시작", type="primary", use_container_width=True):
+                        st.session_state.stage_active = False
+                        st.session_state.focus_topic = ""
+                        st.session_state.start_time = None
+                        st.rerun()
     
     with tab2:
         st.markdown("### 🧘 4-8 호흡 명상")
@@ -397,7 +440,7 @@ else:
         3. 이완된 집중 상태를 만듭니다
         """)
         
-        if st.button("🧘 호흡 명상 시작", type="primary"):
+        if st.button("🧘 호흡 명상 시작", type="primary", key="breath_start"):
             placeholder = st.empty()
             for cycle in range(3):
                 for i in range(4, 0, -1):
@@ -430,6 +473,11 @@ else:
                         if session.get('notes'):
                             st.write("**노트:**")
                             st.write(session['notes'])
+                        
+                        if session.get('distraction_list'):
+                            st.write("**잡념들:**")
+                            for d in session['distraction_list']:
+                                st.write(f"• {d}")
             else:
                 st.info("오늘의 몰입 기록이 아직 없습니다.")
         else:
@@ -464,11 +512,31 @@ else:
         # 주간 목표
         st.markdown("#### 주간 목표")
         weekly_goal = 150  # 주 150분 목표
-        this_week_time = sum(s['duration'] for s in st.session_state.daily_sessions 
-                            if datetime.strptime(s['date'], "%Y-%m-%d").isocalendar()[1] == datetime.now().isocalendar()[1])
+        this_week_time = sum(
+            s['duration'] for s in st.session_state.daily_sessions 
+            if datetime.strptime(s['date'], "%Y-%m-%d").isocalendar()[1] == datetime.now().isocalendar()[1]
+        )
         
         st.progress(min(this_week_time / weekly_goal, 1.0))
         st.caption(f"이번 주 {this_week_time}분 / 목표 {weekly_goal}분")
+        
+        # 몰입 달력 (간단한 통계)
+        if st.session_state.daily_sessions:
+            st.markdown("#### 최근 7일 몰입 현황")
+            last_7_days = {}
+            today = datetime.now()
+            
+            for i in range(7):
+                date = (today - timedelta(days=i)).strftime("%Y-%m-%d")
+                day_sessions = [s for s in st.session_state.daily_sessions if s['date'] == date]
+                if day_sessions:
+                    total_mins = sum(s['duration'] for s in day_sessions)
+                    last_7_days[date] = f"{len(day_sessions)}회, {total_mins}분"
+                else:
+                    last_7_days[date] = "휴식"
+            
+            for date, info in sorted(last_7_days.items(), reverse=True):
+                st.write(f"• {date}: {info}")
     
     with tab5:
         st.markdown("""
@@ -485,6 +553,11 @@ else:
         1. 빠르게 포스트잇(잡념 보관함)에 적기
         2. 다시 주제로 돌아오기
         3. 1초도 주제에서 떼지 않기
+        
+        #### ⏰ 왜 시간을 정하나요?
+        1. **심리적 안정감**: 끝이 정해져 있으면 부담 없이 시작
+        2. **점진적 성장**: 5분 → 10분 → 30분으로 늘려가기
+        3. **일상 적용**: 직장에서 짬짬이 활용 가능
         
         #### 🎯 효과적인 사용법
         1. **짧게 시작**: 5분부터 시작하세요
@@ -503,4 +576,4 @@ else:
 
 # 푸터
 st.markdown("---")
-st.markdown("*🌿 갯버들과 함께하는 몰입 여정 | [프로그램 피드백](https://github.com/sjks007-art/immersion-program)*")
+st.markdown("*🌿 갯버들과 함께하는 몰입 여정 | [피드백](https://github.com/sjks007-art/immersion-program/issues)*")
