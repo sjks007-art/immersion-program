@@ -2,7 +2,7 @@
 # Created by 갯버들
 # Based on 황농문 교수님's 몰입 이론
 # GitHub: https://github.com/sjks007-art/immersion-program
-# Version: 2.1 - 의식의 무대 기능 통합 및 버그 수정
+# Version: 2.2 - 호흡명상 우선 배치 및 버그 수정
 
 import streamlit as st
 import time
@@ -128,6 +128,20 @@ st.markdown("""
         50% { opacity: 1; }
     }
     
+    .breath-circle {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #87CEEB 0%, #4682B4 100%);
+        margin: 20px auto;
+        animation: breathing 4s infinite;
+    }
+    
+    @keyframes breathing {
+        0%, 100% { transform: scale(1); opacity: 0.7; }
+        50% { transform: scale(1.2); opacity: 1; }
+    }
+    
     .report-card {
         background: white;
         padding: 20px;
@@ -161,6 +175,10 @@ if 'focus_notes' not in st.session_state:
     st.session_state.focus_notes = ""
 if 'duration' not in st.session_state:
     st.session_state.duration = 300  # 기본 5분
+if 'breathing_active' not in st.session_state:
+    st.session_state.breathing_active = False
+if 'breath_cycle' not in st.session_state:
+    st.session_state.breath_cycle = 0
 
 # 응원 메시지 풀
 ENCOURAGEMENT_MESSAGES = [
@@ -190,18 +208,91 @@ else:
     # 환영 메시지
     st.success(f"환영합니다, {st.session_state.user_name}님! " + random.choice(ENCOURAGEMENT_MESSAGES))
     
-    # 탭 메뉴
+    # 탭 메뉴 - 호흡명상을 첫 번째로 이동
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "🧘 호흡 명상",
         "🎭 의식의 무대", 
-        "🧘 호흡 명상", 
         "📝 오늘의 기록", 
         "📊 누적 통계",
         "💡 사용법"
     ])
     
     with tab1:
+        st.markdown("### 🧘 4-8 호흡 명상")
+        st.markdown("*몰입 전 마음을 준비하는 시간*")
+        
+        st.info("""
+        **황농문 교수님의 이완된 집중법**
+        
+        긴장된 집중이 아닌 이완된 집중을 위해
+        먼저 호흡을 통해 몸과 마음을 이완시킵니다.
+        
+        **4-8 호흡법**
+        1. 4초간 숨을 들이쉬고
+        2. 8초간 천천히 내쉽니다
+        3. 3회 반복하여 이완 상태를 만듭니다
+        """)
+        
+        if not st.session_state.breathing_active:
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button("🧘 호흡 명상 시작", type="primary", use_container_width=True):
+                    st.session_state.breathing_active = True
+                    st.session_state.breath_cycle = 0
+                    st.rerun()
+        else:
+            # 호흡 명상 진행
+            breath_container = st.container()
+            
+            with breath_container:
+                # 호흡 애니메이션 표시
+                st.markdown('<div class="breath-circle"></div>', unsafe_allow_html=True)
+                
+                if st.session_state.breath_cycle < 3:
+                    # 현재 사이클 표시
+                    st.markdown(f"### 🌬️ {st.session_state.breath_cycle + 1}/3 회차")
+                    
+                    # 프로그레스 바로 호흡 가이드
+                    progress_text = st.empty()
+                    progress_bar = st.progress(0)
+                    
+                    # 들이쉬기 (4초)
+                    for i in range(40):
+                        progress_bar.progress(i / 40)
+                        if i < 40:
+                            progress_text.markdown(f"**🫁 들이쉬기... {4 - i//10}초**")
+                        time.sleep(0.1)
+                    
+                    # 내쉬기 (8초)
+                    for i in range(80):
+                        progress_bar.progress(i / 80)
+                        progress_text.markdown(f"**😮‍💨 내쉬기... {8 - i//10}초**")
+                        time.sleep(0.1)
+                    
+                    # 다음 사이클로
+                    st.session_state.breath_cycle += 1
+                    st.rerun()
+                    
+                else:
+                    # 명상 완료
+                    st.balloons()
+                    st.success("✨ 호흡 명상이 완료되었습니다!")
+                    st.info("이제 이완된 상태로 '의식의 무대'에서 몰입을 시작해보세요.")
+                    
+                    col1, col2, col3 = st.columns([1, 2, 1])
+                    with col2:
+                        if st.button("✅ 완료", type="primary", use_container_width=True):
+                            st.session_state.breathing_active = False
+                            st.session_state.breath_cycle = 0
+                            st.rerun()
+    
+    with tab2:
         st.markdown("### 🎭 의식의 무대")
         st.markdown("*주제에 조명을 비추고, 잡념은 관객석으로*")
+        
+        # 호흡 명상 유도
+        if st.session_state.total_sessions == 0:
+            st.warning("💡 Tip: 먼저 '호흡 명상'으로 마음을 준비하면 더 깊은 몰입이 가능합니다.")
         
         if not st.session_state.stage_active:
             # 몰입 시작 전
@@ -332,12 +423,12 @@ else:
                     with col2:
                         if st.button("🏁 몰입 종료", type="secondary", use_container_width=True):
                             # 몰입 완료 처리
-                            duration_mins = int(st.session_state.duration / 60)
+                            actual_duration = int((time.time() - st.session_state.start_time) / 60)
                             session_data = {
                                 "date": datetime.now().strftime("%Y-%m-%d"),
                                 "time": datetime.now().strftime("%H:%M"),
                                 "topic": st.session_state.focus_topic,
-                                "duration": duration_mins,
+                                "duration": actual_duration,
                                 "distractions": len(st.session_state.distractions),
                                 "distraction_list": st.session_state.distractions.copy(),
                                 "notes": st.session_state.focus_notes,
@@ -346,7 +437,7 @@ else:
                             
                             st.session_state.daily_sessions.append(session_data)
                             st.session_state.total_sessions += 1
-                            st.session_state.total_time += duration_mins
+                            st.session_state.total_time += actual_duration
                             
                             # 레벨 업데이트
                             if st.session_state.total_time >= 300:
@@ -428,28 +519,6 @@ else:
                         st.session_state.focus_topic = ""
                         st.session_state.start_time = None
                         st.rerun()
-    
-    with tab2:
-        st.markdown("### 🧘 4-8 호흡 명상")
-        st.markdown("*몰입 전 마음을 준비하는 시간*")
-        
-        st.info("""
-        **4-8 호흡법**
-        1. 4초간 숨을 들이쉬고
-        2. 8초간 천천히 내쉽니다
-        3. 이완된 집중 상태를 만듭니다
-        """)
-        
-        if st.button("🧘 호흡 명상 시작", type="primary", key="breath_start"):
-            placeholder = st.empty()
-            for cycle in range(3):
-                for i in range(4, 0, -1):
-                    placeholder.markdown(f"### 🫁 들이쉬기... {i}")
-                    time.sleep(1)
-                for i in range(8, 0, -1):
-                    placeholder.markdown(f"### 😮‍💨 내쉬기... {i}")
-                    time.sleep(1)
-            placeholder.success("호흡 명상이 완료되었습니다. 이제 몰입할 준비가 되었습니다!")
     
     with tab3:
         st.markdown("### 📝 오늘의 몰입 기록")
@@ -542,6 +611,12 @@ else:
         st.markdown("""
         ### 💡 몰입 프로그램 사용법
         
+        #### 🧘 호흡 명상 먼저!
+        **이완된 집중**을 위해 호흡 명상으로 시작하세요.
+        - 긴장을 풀고 이완된 상태 만들기
+        - 4초 들이쉬고 8초 내쉬기 3회
+        - 몰입의 질이 완전히 달라집니다
+        
         #### 🎭 의식의 무대란?
         황농문 교수님의 '의식의 무대' 비유를 실제로 구현한 기능입니다.
         - **무대**: 현재 집중해야 할 주제
@@ -560,10 +635,11 @@ else:
         3. **일상 적용**: 직장에서 짬짬이 활용 가능
         
         #### 🎯 효과적인 사용법
-        1. **짧게 시작**: 5분부터 시작하세요
-        2. **구체적 주제**: 막연한 것보다 구체적인 주제
-        3. **매일 실천**: 꾸준함이 가장 중요
-        4. **16시간 법칙**: 다음날 아침 다시 생각하기
+        1. **호흡 명상으로 시작**: 이완 상태 만들기
+        2. **짧게 시작**: 5분부터 천천히
+        3. **구체적 주제**: 막연한 것보다 구체적인 주제
+        4. **매일 실천**: 꾸준함이 가장 중요
+        5. **16시간 법칙**: 다음날 아침 다시 생각하기
         
         #### 📊 레벨 시스템
         - **초급 (0-100분)**: 기초 몰입 훈련
@@ -576,4 +652,4 @@ else:
 
 # 푸터
 st.markdown("---")
-st.markdown("*🌿 갯버들과 함께하는 몰입 여정 | [피드백](https://github.com/sjks007-art/immersion-program/issues)*")
+st.markdown("*🌿 갯버들과 함께하는 몰입 여정 | [GitHub](https://github.com/sjks007-art/immersion-program)*")
