@@ -2,7 +2,7 @@
 # Created by 갯버들
 # Based on 황농문 교수님's 몰입 이론
 # GitHub: https://github.com/sjks007-art/immersion-program
-# Version: 2.2 - 호흡명상 우선 배치 및 버그 수정
+# Version: 2.3 - 구글 폼 링크 수정
 
 import streamlit as st
 import time
