@@ -652,4 +652,4 @@ else:
 
 # 푸터
 st.markdown("---")
-st.markdown("*🌿 갯버들과 함께하는 몰입 여정 | [GitHub](https://github.com/sjks007-art/immersion-program)*")
+st.markdown("*🌿 갯버들과 함께하는 몰입 여정 | [피드백 보내기](https://docs.google.com/forms/d/e/1FAIpQLSe1DxRA1sFYyH_d7BDmrlZTnPPT-1uc61ZXZIai3JLGJyOvhg/viewform)*")
