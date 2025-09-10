@@ -42,15 +42,17 @@ st.markdown("""
         margin-bottom: 2rem;
     }
     
-    /* 의식의 극장 효과 - 강화된 버전 */
+    /* 의식의 극장 효과 - 색상 개선 버전 */
     .theater-stage {
-        background: #0a0a0a;
+        background: linear-gradient(180deg, #2a2a3e 0%, #16213e 100%);
         border-radius: 20px;
         padding: 60px 20px;
         margin: 30px auto;
         position: relative;
         overflow: hidden;
-        box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+        box-shadow: 
+            inset 0 0 100px rgba(0,0,0,0.5),
+            0 0 50px rgba(255,215,0,0.2);
     }
     
     .theater-stage::before {
@@ -63,24 +65,24 @@ st.markdown("""
         height: 300px;
         background: radial-gradient(
             ellipse at center,
-            rgba(255,255,200,0.4) 0%,
-            rgba(255,255,150,0.2) 30%,
+            rgba(255,255,200,0.6) 0%,
+            rgba(255,215,0,0.3) 30%,
             transparent 70%
         );
         animation: spotlight 3s ease-in-out infinite;
     }
     
     @keyframes spotlight {
-        0%, 100% { opacity: 0.8; }
-        50% { opacity: 1; }
+        0%, 100% { opacity: 0.8; transform: translateX(-50%) scale(1); }
+        50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
     }
     
     .stage-title {
-        color: white;
+        color: #ffffff;
         text-align: center;
         font-size: 2rem;
         margin-bottom: 20px;
-        text-shadow: 0 0 20px rgba(255,255,255,0.5);
+        text-shadow: 0 0 30px rgba(255,255,255,0.8);
         position: relative;
         z-index: 1;
     }
@@ -90,9 +92,17 @@ st.markdown("""
         text-align: center;
         font-size: 1.8rem;
         font-weight: bold;
-        text-shadow: 0 0 30px rgba(255,215,0,0.8);
+        text-shadow: 
+            0 0 30px rgba(255,215,0,1),
+            0 0 60px rgba(255,215,0,0.5);
         position: relative;
         z-index: 1;
+        animation: glow 2s ease-in-out infinite;
+    }
+    
+    @keyframes glow {
+        0%, 100% { opacity: 0.9; }
+        50% { opacity: 1; }
     }
     
     /* 타이머 스타일 */
@@ -590,19 +600,34 @@ else:
         with col1:
             st.markdown("""
             **황농문 교수님**
+            
             [몰입아카데미](https://youtube.com/@molipacademy)
+            
+            몰입의 즐거움을 체험하고
+            의식의 무대를 활용하는
+            이완된 집중의 방법론
             """)
         
         with col2:
             st.markdown("""
             **김종원 작가님**
+            
             [채널 바로가기](https://youtube.com/channel/UCR8ixAPYVq4uzN_w_gtGxOw)
+            
+            하루 한 질문으로
+            깊이 생각하는 힘을 기르고
+            필사로 마음을 다스리기
             """)
         
         with col3:
             st.markdown("""
             **김주환 교수님**
+            
             [채널 바로가기](https://youtube.com/@joohankim)
+            
+            내면소통과 회복탄력성으로
+            감사의 과학을 실천하고
+            그릿을 기르는 방법
             """)
 
 # 푸터
