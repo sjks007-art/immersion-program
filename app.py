@@ -273,6 +273,13 @@ else:
         with col1:
             if st.button("🎬 몰입 시작", type="primary", use_container_width=True):
                 if topic:
+                    # 무료 사용자 제한 확인
+                    if not st.session_state.get('is_premium', False):
+                        if len(st.session_state.today_sessions) >= 3:
+                            st.warning("🔒 무료 버전은 하루 3회까지 사용 가능합니다.")
+                            st.info("프리미엄으로 업그레이드하여 무제한 몰입하세요!")
+                            st.stop()
+                    
                     st.session_state.current_topic = topic
                     st.session_state.selected_duration = duration
                     st.session_state.is_running = True
