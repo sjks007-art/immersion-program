@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
-# app.py - 통합 몰입 체험 프로그램 (완전판)
+# app.py - 통합 몰입 체험 프로그램 (최종 수정판)
 # Created by 갯버들
-# 황농문, 김종원, 김주환 교수/작가님들의 지혜를 존중하며 통합
-# Version: 4.0 - 모든 기능 통합
+# Version: 5.0 - 완전 수정 버전
 
 import streamlit as st
 import time
@@ -64,6 +63,13 @@ st.markdown("""
         padding: 15px;
         margin: 15px 0;
     }
+    .spotlight {
+        background: radial-gradient(circle at center, rgba(255,255,255,0.9) 0%, rgba(255,255,200,0.3) 50%, rgba(0,0,0,0.1) 100%);
+        border-radius: 50%;
+        padding: 30px;
+        margin: 20px auto;
+        max-width: 400px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -88,21 +94,50 @@ if 'gratitude_entries' not in st.session_state:
     st.session_state.gratitude_entries = []
 if 'breathing_complete' not in st.session_state:
     st.session_state.breathing_complete = False
-if 'active_tab' not in st.session_state:
-    st.session_state.active_tab = 0
 if 'today_insights' not in st.session_state:
     st.session_state.today_insights = []
+if 'last_question_date' not in st.session_state:
+    st.session_state.last_question_date = None
 
-# 오늘의 질문 생성 (김종원 방식)
-daily_questions = [
-    "오늘 나는 무엇을 위해 시간을 쓸 것인가?",
-    "지금 이 순간, 나에게 가장 중요한 것은 무엇인가?",
-    "오늘 내가 감사해야 할 세 가지는 무엇인가?",
-    "어제보다 나은 오늘을 만들기 위해 무엇을 할 것인가?",
-    "내가 진정으로 원하는 삶의 모습은 무엇인가?",
-    "오늘 누군가에게 줄 수 있는 가치는 무엇인가?",
-    "지금 이 일이 10년 후에도 중요할까?"
-]
+# 오늘의 질문 생성 (날짜 기반으로 매일 변경)
+def get_today_question():
+    daily_questions = [
+        "오늘 나는 무엇을 위해 시간을 쓸 것인가?",
+        "지금 이 순간, 나에게 가장 중요한 것은 무엇인가?",
+        "오늘 내가 감사해야 할 세 가지는 무엇인가?",
+        "어제보다 나은 오늘을 만들기 위해 무엇을 할 것인가?",
+        "내가 진정으로 원하는 삶의 모습은 무엇인가?",
+        "오늘 누군가에게 줄 수 있는 가치는 무엇인가?",
+        "지금 이 일이 10년 후에도 중요할까?",
+        "오늘 내가 피하고 있는 것은 무엇인가?",
+        "지금 이 순간 집중해야 할 한 가지는?",
+        "오늘 마주한 도전을 어떻게 기회로 만들까?",
+        "내가 가진 것들에 얼마나 감사하고 있는가?",
+        "오늘 누군가를 미소짓게 할 수 있는 일은?",
+        "지금 내 마음을 무겁게 하는 것은 무엇인가?",
+        "오늘 배운 가장 중요한 교훈은 무엇인가?",
+        "내일의 나에게 전하고 싶은 메시지는?"
+    ]
+    # 날짜를 기반으로 매일 다른 질문 선택
+    today_index = datetime.now().timetuple().tm_yday % len(daily_questions)
+    return daily_questions[today_index]
+
+# 필사할 문구들 (김종원 작가님)
+def get_daily_quote():
+    quotes = [
+        "사랑한다는 것은 상대방이 나와 다른 존재임을 인정하는 일이다.",
+        "진정한 성장은 불편함을 견디는 데서 시작된다.",
+        "매일 조금씩 나아지는 것이 큰 변화보다 중요하다.",
+        "고독은 자신과 대화할 수 있는 소중한 시간이다.",
+        "질문하는 능력이 답을 찾는 능력보다 중요하다.",
+        "오늘의 작은 실천이 미래의 큰 변화를 만든다.",
+        "실패는 성공으로 가는 필수 과정이다.",
+        "타인과의 비교는 성장의 적이다.",
+        "감사는 행복으로 가는 가장 빠른 길이다.",
+        "침묵 속에서 진정한 지혜가 태어난다."
+    ]
+    today_index = datetime.now().timetuple().tm_yday % len(quotes)
+    return quotes[today_index]
 
 # 헤더
 st.markdown('<h1 class="main-header">🎯 통합 몰입 프로그램</h1>', unsafe_allow_html=True)
@@ -118,11 +153,17 @@ if not st.session_state.user_name:
             if st.button("시작하기", type="primary", use_container_width=True):
                 if name:
                     st.session_state.user_name = name
-                    st.session_state.daily_question = random.choice(daily_questions)
+                    st.session_state.daily_question = get_today_question()
+                    st.session_state.last_question_date = datetime.now().date()
                     st.rerun()
                 else:
                     st.warning("닉네임을 입력해주세요")
 else:
+    # 날짜가 바뀌었으면 새로운 질문 생성
+    if st.session_state.last_question_date != datetime.now().date():
+        st.session_state.daily_question = get_today_question()
+        st.session_state.last_question_date = datetime.now().date()
+    
     # 오늘의 통계 표시
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -135,7 +176,7 @@ else:
     with col4:
         st.metric("감사 기록", f"{len(st.session_state.gratitude_entries)}개")
     
-    # 오늘의 질문 표시 (김종원)
+    # 오늘의 질문 표시
     st.markdown("---")
     st.markdown('<div class="question-box">', unsafe_allow_html=True)
     st.markdown(f"### 📌 오늘의 질문")
@@ -143,14 +184,8 @@ else:
     st.markdown("*이 질문을 품고 하루를 보내세요. 3번 이상 떠올리며 깊이 생각해보세요.*")
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # 탭 구성
-    tabs = st.tabs(["📖 사용법", "🫁 호흡명상", "🎭 몰입실천", "📝 감사일기", "🏃 움직임", "📊 오늘의 기록"])
-    
-    # 호흡명상 완료 시 자동 탭 전환
-    if st.session_state.breathing_complete and st.session_state.active_tab == 1:
-        st.session_state.active_tab = 2
-        st.session_state.breathing_complete = False
-        st.rerun()
+    # 탭 구성 (필사 메뉴 추가)
+    tabs = st.tabs(["📖 사용법", "🫁 호흡명상", "🎭 몰입실천", "📝 감사일기", "✍️ 필사하기", "🏃 움직임", "📊 오늘의 기록", "🔗 추천 영상"])
     
     with tabs[0]:
         st.markdown("""
@@ -158,7 +193,7 @@ else:
         
         이 프로그램은 세 분의 지혜를 통합했습니다:
         - **황농문 교수님**: 이완된 집중, 의식의 무대
-        - **김종원 작가님**: 하루 한 질문, 3번 이상 생각하기
+        - **김종원 작가님**: 하루 한 질문, 3번 이상 생각하기, 필사
         - **김주환 교수님**: 내면소통, 감사일기, 존2 운동
         
         #### 📅 일일 루틴
@@ -166,7 +201,8 @@ else:
         **아침 (기상 직후)**
         1. 오늘의 질문 확인
         2. 호흡명상 (4-8 호흡법)
-        3. 첫 몰입 세션 (5-10분)
+        3. 오늘의 문구 필사
+        4. 첫 몰입 세션 (5-10분)
         
         **낮 (업무 중)**
         - 오늘의 질문 떠올리기 (최소 3회)
@@ -186,8 +222,8 @@ else:
         """)
     
     with tabs[1]:
-        st.markdown("### 🫁 4-8 호흡명상 (황농문 교수님)")
-        st.info("이완된 상태에서 천천히 생각하기의 시작")
+        st.markdown("### 🫁 4-8 호흡명상")
+        st.info("이완된 상태에서 천천히 생각하기")
         
         col1, col2 = st.columns(2)
         with col1:
@@ -213,9 +249,7 @@ else:
                         time.sleep(0.1)
                 
                 st.success("✨ 호흡명상 완료! 이제 몰입할 준비가 되었습니다.")
-                st.session_state.breathing_complete = True
-                time.sleep(2)
-                st.rerun()
+                st.balloons()
     
     with tabs[2]:
         st.markdown("### 🎭 의식의 무대 - 몰입 실천")
@@ -237,7 +271,7 @@ else:
         col1, col2 = st.columns(2)
         
         with col1:
-            if st.button("🎬 무대 조명 켜기", type="primary", use_container_width=True):
+            if st.button("🎬 몰입 시작", type="primary", use_container_width=True):
                 if topic:
                     st.session_state.current_topic = topic
                     st.session_state.selected_duration = duration
@@ -250,85 +284,76 @@ else:
         with col2:
             if st.button("⏹️ 몰입 종료", use_container_width=True):
                 if st.session_state.is_running:
-                    elapsed = (datetime.now() - st.session_state.start_time).seconds // 60
+                    elapsed = (datetime.now() - st.session_state.start_time).total_seconds() // 60
                     st.session_state.today_sessions.append({
                         'topic': st.session_state.current_topic,
-                        'duration': elapsed,
+                        'duration': int(elapsed),
                         'time': datetime.now().strftime("%H:%M")
                     })
-                    st.session_state.total_minutes += elapsed
+                    st.session_state.total_minutes += int(elapsed)
                     st.session_state.is_running = False
                     st.rerun()
         
         # 몰입 진행 중 표시
         if st.session_state.is_running:
-            st.markdown('<div class="stage-box">', unsafe_allow_html=True)
+            # 무대 효과 추가 (스포트라이트)
+            st.markdown('<div class="spotlight">', unsafe_allow_html=True)
             st.markdown("## 🎭 의식의 무대")
             st.markdown(f"### 💡 {st.session_state.current_topic}")
-            
-            elapsed = (datetime.now() - st.session_state.start_time).seconds
-            remaining = st.session_state.selected_duration * 60 - elapsed
-            
-            if remaining > 0:
-                mins, secs = divmod(remaining, 60)
-                st.markdown(f'<div class="timer-text">{mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
-                
-                # 진행률 표시
-                progress = elapsed / (st.session_state.selected_duration * 60)
-                st.progress(progress)
-                
-                # 16시간 법칙 알림
-                if elapsed == 60:
-                    st.info("💡 기억하세요: 16시간 후 이 문제를 다시 생각해보세요!")
-            else:
-                st.balloons()
-                st.success("🎉 몰입 완료! 자동 보고서를 생성합니다...")
-                time.sleep(2)
-                
-                # 자동 보고서 생성
-                elapsed_min = st.session_state.selected_duration
-                st.session_state.today_sessions.append({
-                    'topic': st.session_state.current_topic,
-                    'duration': elapsed_min,
-                    'time': datetime.now().strftime("%H:%M")
-                })
-                st.session_state.total_minutes += elapsed_min
-                st.session_state.is_running = False
-                st.rerun()
-            
             st.markdown('</div>', unsafe_allow_html=True)
-        
-        # 메모장
-        st.markdown("---")
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("#### 📝 잡념 메모장")
-            distraction = st.text_area(
-                "떠오르는 잡념",
-                height=150,
-                placeholder="관객석으로 보낼 잡념을 적으세요",
-                key="distraction_memo"
-            )
-        
-        with col2:
-            st.markdown("#### 💡 통찰 메모장")
-            insight = st.text_area(
-                "떠오른 아이디어",
-                height=150,
-                placeholder="3번 이상 생각한 내용을 적으세요",
-                key="idea_memo"
-            )
-            if st.button("통찰 저장"):
-                if insight:
-                    st.session_state.today_insights.append({
-                        'time': datetime.now().strftime("%H:%M"),
-                        'content': insight
+            
+            # 타이머
+            if st.session_state.start_time:
+                elapsed = (datetime.now() - st.session_state.start_time).total_seconds()
+                remaining = max(0, st.session_state.selected_duration * 60 - elapsed)
+                
+                if remaining > 0:
+                    mins, secs = divmod(int(remaining), 60)
+                    st.markdown(f'<div class="timer-text">{mins:02d}:{secs:02d}</div>', unsafe_allow_html=True)
+                    
+                    # 진행률 표시
+                    progress = min(elapsed / (st.session_state.selected_duration * 60), 1.0)
+                    st.progress(progress)
+                    
+                    # 3초마다 자동 새로고침
+                    time.sleep(3)
+                    st.rerun()
+                else:
+                    # 몰입 완료
+                    st.balloons()
+                    st.success("🎉 몰입 완료!")
+                    
+                    # 세션 기록
+                    st.session_state.today_sessions.append({
+                        'topic': st.session_state.current_topic,
+                        'duration': st.session_state.selected_duration,
+                        'time': datetime.now().strftime("%H:%M")
                     })
-                    st.success("통찰이 저장되었습니다!")
+                    st.session_state.total_minutes += st.session_state.selected_duration
+                    st.session_state.is_running = False
+                    time.sleep(2)
+                    st.rerun()
+        
+        # 몰입 노트 (통합 버전)
+        st.markdown("---")
+        st.markdown("#### 💡 몰입 노트")
+        note = st.text_area(
+            "떠오른 생각을 자유롭게 기록하세요",
+            height=200,
+            placeholder="• 주제 관련 아이디어\n• 해결해야 할 문제\n• 떠오른 통찰\n• 기타 메모",
+            key="immersion_note"
+        )
+        
+        if st.button("💾 노트 저장", use_container_width=True):
+            if note and note.strip():
+                st.session_state.today_insights.append({
+                    'time': datetime.now().strftime("%H:%M"),
+                    'content': note
+                })
+                st.success("노트가 저장되었습니다!")
     
     with tabs[3]:
-        st.markdown("### 📝 감사일기 (김주환 교수님)")
+        st.markdown("### 📝 감사일기")
         st.info("감사는 내면소통의 시작입니다")
         
         # 감사 카테고리
@@ -362,6 +387,44 @@ else:
                 st.markdown(f"**{i}. [{entry['category']}]** {entry['content'][:50]}...")
     
     with tabs[4]:
+        st.markdown("### ✍️ 오늘의 필사")
+        st.info("손으로 쓰며 마음에 새기기")
+        
+        # 오늘의 필사 문구
+        today_quote = get_daily_quote()
+        
+        st.markdown("#### 📜 오늘의 문구")
+        st.markdown(f"> **{today_quote}**")
+        st.caption("- 김종원 작가님의 말씀 중에서")
+        
+        st.markdown("---")
+        
+        # 필사 공간
+        st.markdown("#### ✏️ 필사하기")
+        st.info("아래 공간에 위 문구를 천천히 따라 써보세요. 손으로 쓰면 더 좋습니다.")
+        
+        written_text = st.text_area(
+            "필사 공간",
+            height=150,
+            placeholder="위 문구를 이곳에 천천히 따라 써보세요...",
+            key="transcription"
+        )
+        
+        if st.button("필사 완료", use_container_width=True):
+            if written_text:
+                st.success("✅ 필사를 완료했습니다! 오늘의 문구가 마음에 새겨지길 바랍니다.")
+                st.balloons()
+        
+        st.markdown("---")
+        st.markdown("""
+        #### 💭 필사의 의미
+        - 천천히 쓰며 의미를 되새김
+        - 손과 마음의 연결
+        - 깊은 사고의 시작
+        - 하루 한 문장의 지혜
+        """)
+    
+    with tabs[5]:
         st.markdown("### 🏃 움직임과 사고 (Zone 2 운동)")
         st.info("움직이면서 생각하면 창의성이 2배 증가합니다")
         
@@ -403,7 +466,7 @@ else:
             if st.button("운동 기록 저장"):
                 st.success(f"✅ {exercise_duration}분 운동 완료!")
     
-    with tabs[5]:
+    with tabs[6]:
         st.markdown("### 📊 오늘의 기록 & 자동 보고서")
         
         # 자동 보고서 생성
@@ -439,12 +502,6 @@ else:
                 for entry in st.session_state.gratitude_entries[-3:]:
                     st.markdown(f"- {entry['content'][:50]}...")
             
-            # 16시간 법칙 알림
-            if st.session_state.today_sessions:
-                first_session = st.session_state.today_sessions[0]
-                reminder_time = datetime.now() + timedelta(hours=16)
-                st.info(f"💡 16시간 법칙: 내일 {reminder_time.strftime('%H:%M')}에 '{first_session['topic']}'을 다시 생각해보세요!")
-            
             # 보고서 다운로드
             report_text = f"""
 === {datetime.now().strftime('%Y년 %m월 %d일')} 몰입 보고서 ===
@@ -457,13 +514,13 @@ else:
 - 완료 세션: {len(st.session_state.today_sessions)}개
 
 [세부 기록]
-{chr(10).join([f"- {s['time']} | {s['topic']} ({s['duration']}분)" for s in st.session_state.today_sessions])}
+{chr(10).join([f"- {s['time']} | {s['topic']} ({s['duration']}분)" for s in st.session_state.today_sessions]) if st.session_state.today_sessions else "- 기록 없음"}
 
 [감사 일기]
-{chr(10).join([f"- {e['content']}" for e in st.session_state.gratitude_entries])}
+{chr(10).join([f"- {e['content']}" for e in st.session_state.gratitude_entries]) if st.session_state.gratitude_entries else "- 기록 없음"}
 
 [통찰과 아이디어]
-{chr(10).join([f"- {i['content']}" for i in st.session_state.today_insights])}
+{chr(10).join([f"- {i['content']}" for i in st.session_state.today_insights]) if st.session_state.today_insights else "- 기록 없음"}
 
 ---
 Created by 통합 몰입 프로그램
@@ -471,11 +528,50 @@ Created by 통합 몰입 프로그램
             st.download_button(
                 label="📥 보고서 다운로드",
                 data=report_text,
-                file_name=f"몰입보고서_{datetime.now().strftime('%Y%m%d')}.txt",
+                file_name=f"몰입보고서_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
                 mime="text/plain"
             )
         else:
             st.info("아직 기록이 없습니다. 몰입을 시작해보세요!")
+    
+    with tabs[7]:
+        st.markdown("### 🔗 추천 영상")
+        st.info("더 깊은 이해를 위한 YouTube 영상들")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("#### 황농문 교수님")
+            st.markdown("""
+            📺 **몰입 이론 강의**
+            - [몰입아카데미 YouTube 채널](https://youtube.com/@molipacademy?si=8GZv6-99UVO2-yYG)
+            - 몰입의 즐거움
+            - 의식의 무대
+            - 천천히 생각하기
+            """)
+        
+        with col2:
+            st.markdown("#### 김종원 작가님")
+            st.markdown("""
+            📺 **사고력 강의**
+            - [김종원 YouTube 채널](https://youtube.com/channel/UCR8ixAPYVq4uzN_w_gtGxOw?si=EE17IdSNpg_czM5u)
+            - 하루 한 질문
+            - 필사의 힘
+            - 깊이 생각하기
+            """)
+        
+        with col3:
+            st.markdown("#### 김주환 교수님")
+            st.markdown("""
+            📺 **내면소통 강의**
+            - [김주환 YouTube 채널](https://youtube.com/@joohankim?si=PZxhHus79e2-IObP)
+            - 감사의 과학
+            - 회복탄력성
+            - 그릿의 힘
+            """)
+        
+        st.markdown("---")
+        st.info("📚 위 링크를 통해 더 깊은 이론과 실천법을 배워보세요!")
 
 # 푸터
 st.markdown("---")
