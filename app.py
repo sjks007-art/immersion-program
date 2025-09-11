@@ -612,7 +612,8 @@ Seoul National University Honorary Professor<br>
 Author of "Immersion" Series | Founder of Immersion Academy<br><br>
 <b>🌿 Developed by 갯버들 (한승희)</b><br>
 K-Immersion Program | Global Launch 2025<br>
-📧 Contact: immersion.program@gmail.com<br><br>
+🌐 URL: https://immersion-program.onrender.com/<br>
+📧 Contact: sjks007@gmail.com<br><br>
 <i>"From Work Hard to Think Hard"</i>
 </div>
 """, unsafe_allow_html=True)
