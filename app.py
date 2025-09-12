@@ -65,9 +65,10 @@ def load_css():
     
     .spotlight {
         background: radial-gradient(circle at center, 
-            rgba(255,255,200,0.9) 0%, 
-            rgba(255,255,200,0.3) 30%, 
-            transparent 70%);
+            rgba(255,215,0,0.4) 0%, 
+            rgba(255,215,0,0.2) 40%, 
+            rgba(255,215,0,0.1) 60%, 
+            transparent 80%);
         border-radius: 50%;
         padding: 60px;
         text-align: center;
@@ -78,13 +79,34 @@ def load_css():
         flex-direction: column;
         justify-content: center;
         align-items: center;
+        box-shadow: 0 0 100px rgba(255,215,0,0.5);
+        position: relative;
+    }
+    
+    .spotlight::before {
+        content: '';
+        position: absolute;
+        top: -20px;
+        left: -20px;
+        right: -20px;
+        bottom: -20px;
+        background: radial-gradient(circle at center,
+            rgba(255,215,0,0.3) 0%,
+            transparent 70%);
+        border-radius: 50%;
+        z-index: -1;
     }
     
     .focus-topic {
-        color: #333;
-        font-size: 28px;
+        color: #ffd700;
+        font-size: 32px;
         font-weight: bold;
-        text-shadow: 0 0 20px rgba(255,255,200,0.8);
+        text-shadow: 
+            0 0 10px rgba(255,215,0,1),
+            0 0 20px rgba(255,215,0,0.8),
+            0 0 30px rgba(255,215,0,0.6),
+            0 0 40px rgba(255,215,0,0.4);
+        letter-spacing: 1px;
     }
     
     .timer-display {
