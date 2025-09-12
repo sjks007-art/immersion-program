@@ -1,23 +1,13 @@
 # -*- coding: utf-8 -*-
-# app.py - K-몰입 프로그램 (황농문 교수 16시간 이론)
-# Created by 갯버들 (한승희)
-# Based on Prof. Hwang Nong-Moon's Immersion Theory
-# Seoul National University Honorary Professor
-# 
-# 핵심 이론:
-# - 16시간 이상 이미지 트레이닝
-# - Work Hard → Think Hard 패러다임 전환
-# - 릴렉싱 상태에서의 지속적 몰입
-#
-# GitHub: https://github.com/sjks007-art/immersion-program
-# Version: 5.0 - 황농문 교수님 전용 최종판
-# Date: 2025.09.11
+# app_optimized.py - K-몰입 프로그램 (최적화 버전)
+# 황농문 교수 16시간 이론 기반
+# 성능 최적화: time.sleep() 제거, st.rerun() 최소화
+# Version: 6.0 - 무료 호스팅 최적화판
+# Date: 2025.09.12
 
 import streamlit as st
-import time
 from datetime import datetime, timedelta
-import json
-import os
+import random
 
 # 페이지 설정
 st.set_page_config(
@@ -27,8 +17,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# CSS 스타일 (황농문 교수님 이론 특화)
-st.markdown("""
+# CSS 스타일 캐싱
+@st.cache_data
+def load_css():
+    return """
 <style>
     /* 메인 헤더 - 교수님 이론 강조 */
     .main-header {
@@ -81,12 +73,6 @@ st.markdown("""
         padding: 60px;
         text-align: center;
         margin: 20px auto;
-        animation: pulse 3s infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); }
     }
     
     .focus-topic {
@@ -146,30 +132,77 @@ st.markdown("""
     .postit:hover {
         transform: rotate(0deg) scale(1.05);
     }
+    
+    /* 호흡 단계 인디케이터 */
+    .breath-indicator {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin: 20px 0;
+    }
+    
+    .breath-step {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        background: #e0e0e0;
+        color: #666;
+    }
+    
+    .breath-step.active {
+        background: #4a90e2;
+        color: white;
+    }
+    
+    .breath-step.completed {
+        background: #28a745;
+        color: white;
+    }
 </style>
-""", unsafe_allow_html=True)
+"""
 
-# 세션 상태 초기화
-if 'stage_active' not in st.session_state:
-    st.session_state.stage_active = False
-if 'focus_topic' not in st.session_state:
-    st.session_state.focus_topic = ""
-if 'distractions' not in st.session_state:
-    st.session_state.distractions = []
-if 'immersion_time' not in st.session_state:
-    st.session_state.immersion_time = 10
-if 'timer_running' not in st.session_state:
-    st.session_state.timer_running = False
-if 'breathing_active' not in st.session_state:
-    st.session_state.breathing_active = False
-if 'total_sessions' not in st.session_state:
-    st.session_state.total_sessions = 0
-if 'total_time' not in st.session_state:
-    st.session_state.total_time = 0
-if 'user_name' not in st.session_state:
-    st.session_state.user_name = ""
-if 'think_hard_points' not in st.session_state:
-    st.session_state.think_hard_points = 0
+# 명언 캐싱
+@st.cache_data
+def get_quotes():
+    return [
+        "Work Hard가 아닌 Think Hard가 성공의 열쇠입니다",
+        "16시간 동안 문제를 품고 있으면 반드시 해결됩니다",
+        "몰입은 긴장이 아닌 릴렉싱 상태에서 시작됩니다",
+        "1초 안에 잡념을 처리하고 다시 집중하세요",
+        "실제 작업은 짧아도, 생각은 16시간 이상 지속되어야 합니다"
+    ]
+
+# CSS 로드
+st.markdown(load_css(), unsafe_allow_html=True)
+
+# 세션 상태 초기화 함수
+def init_session_state():
+    defaults = {
+        'stage_active': False,
+        'focus_topic': "",
+        'distractions': [],
+        'immersion_time': 10,
+        'timer_running': False,
+        'breathing_step': 0,  # 호흡 단계 추적
+        'total_sessions': 0,
+        'total_time': 0,
+        'user_name': "",
+        'think_hard_points': 0,
+        'start_time': None,
+        'timer_end_time': None,
+        'session_completed': False
+    }
+    
+    for key, value in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
+
+# 초기화 실행
+init_session_state()
 
 # 헤더
 st.markdown('<h1 class="main-header">🎯 K-몰입 프로그램</h1>', unsafe_allow_html=True)
@@ -201,17 +234,8 @@ else:
     with col2:
         st.markdown(f'<div class="think-hard-badge">Think Hard: {st.session_state.think_hard_points}점</div>', unsafe_allow_html=True)
     
-    # 황농문 교수님 명언
-    quotes = [
-        "Work Hard가 아닌 Think Hard가 성공의 열쇠입니다",
-        "16시간 동안 문제를 품고 있으면 반드시 해결됩니다",
-        "몰입은 긴장이 아닌 릴렉싱 상태에서 시작됩니다",
-        "1초 안에 잡념을 처리하고 다시 집중하세요",
-        "실제 작업은 짧아도, 생각은 16시간 이상 지속되어야 합니다"
-    ]
-    import random
-    selected_quote = random.choice(quotes)
-    
+    # 황농문 교수님 명언 표시
+    selected_quote = random.choice(get_quotes())
     st.markdown(f"""
     <div style='text-align:center; padding:15px; background:#f0f2f6; border-radius:10px; margin-bottom:20px;'>
     <i>"{selected_quote}"</i><br>
@@ -219,7 +243,7 @@ else:
     </div>
     """, unsafe_allow_html=True)
     
-    # 탭 생성 (황농문 이론 중심)
+    # 탭 생성
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         "📖 황농문 이론", 
         "🧘 릴렉싱 준비", 
@@ -228,7 +252,7 @@ else:
         "🎓 몰입아카데미"
     ])
     
-    # 탭1: 황농문 이론
+    # 탭1: 황농문 이론 (변경 없음)
     with tab1:
         st.markdown("### 🎓 황농문 교수님의 16시간 몰입 이론")
         
@@ -286,7 +310,7 @@ else:
         </div>
         """, unsafe_allow_html=True)
     
-    # 탭2: 릴렉싱 준비
+    # 탭2: 릴렉싱 준비 (최적화됨 - time.sleep() 제거)
     with tab2:
         st.markdown("### 🧘 릴렉싱 - 몰입의 시작")
         
@@ -305,39 +329,79 @@ else:
         - **3회** 반복으로 완벽한 릴렉싱
         """)
         
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("🎯 릴렉싱 시작", use_container_width=True, type="primary", key="breath_start"):
-                st.session_state.breathing_active = True
+        # 호흡 진행 상태 표시
+        st.markdown('<div class="breath-indicator">', unsafe_allow_html=True)
+        cols = st.columns(6)
+        steps = ["들이쉬기 1", "내쉬기 1", "들이쉬기 2", "내쉬기 2", "들이쉬기 3", "내쉬기 3"]
         
-        if st.session_state.breathing_active:
-            breathing_container = st.empty()
+        for i, (col, step) in enumerate(zip(cols, steps)):
+            with col:
+                if i < st.session_state.breathing_step:
+                    st.markdown(f'<div class="breath-step completed">✓</div>', unsafe_allow_html=True)
+                elif i == st.session_state.breathing_step:
+                    st.markdown(f'<div class="breath-step active">{i+1}</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown(f'<div class="breath-step">{i+1}</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        breathing_container = st.empty()
+        
+        if st.session_state.breathing_step == 0:
+            # 시작 전
+            breathing_container.markdown("""
+            <div style='text-align:center; padding:50px; background:#f0f2f6; border-radius:10px;'>
+                <h2 style='color:#4a90e2;'>릴렉싱 준비</h2>
+                <p style='font-size:18px;'>편안한 자세로 앉아 호흡을 시작하세요</p>
+            </div>
+            """, unsafe_allow_html=True)
             
-            for round in range(1, 4):
-                # 들이쉬기
-                for i in range(4, 0, -1):
-                    breathing_container.markdown(f"""
-                    <div style='text-align:center; padding:50px; background:#e3f2fd; border-radius:10px;'>
-                        <h1 style='color:#4a90e2; font-size:48px;'>🫁 들이쉬기</h1>
-                        <h2 style='font-size:72px;'>{i}</h2>
-                        <p style='font-size:20px;'>라운드 {round}/3</p>
-                        <p>코로 천천히, 깊게...</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    time.sleep(1)
-                
-                # 내쉬기
-                for i in range(8, 0, -1):
-                    breathing_container.markdown(f"""
-                    <div style='text-align:center; padding:50px; background:#e8f5e9; border-radius:10px;'>
-                        <h1 style='color:#28a745; font-size:48px;'>💨 내쉬기</h1>
-                        <h2 style='font-size:72px;'>{i}</h2>
-                        <p style='font-size:20px;'>라운드 {round}/3</p>
-                        <p>입으로 천천히, 모두...</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    time.sleep(1)
+            if st.button("🎯 릴렉싱 시작", use_container_width=True, type="primary"):
+                st.session_state.breathing_step = 1
+                st.rerun()
+        
+        elif st.session_state.breathing_step <= 6:
+            # 호흡 진행 중
+            round_num = (st.session_state.breathing_step + 1) // 2
             
+            if st.session_state.breathing_step % 2 != 0:  # 홀수: 들이쉬기
+                phase = "들이쉬기"
+                emoji = "🫁"
+                bg_color = "#e3f2fd"
+                text_color = "#4a90e2"
+                instruction = "코로 천천히, 4초간 깊게 들이쉬세요..."
+                button_text = "내쉬기 →"
+            else:  # 짝수: 내쉬기
+                phase = "내쉬기"
+                emoji = "💨"
+                bg_color = "#e8f5e9"
+                text_color = "#28a745"
+                instruction = "입으로 천천히, 8초간 모두 내쉬세요..."
+                if round_num < 3:
+                    button_text = f"라운드 {round_num + 1} →"
+                else:
+                    button_text = "✅ 완료"
+            
+            breathing_container.markdown(f"""
+            <div style='text-align:center; padding:40px; background:{bg_color}; border-radius:10px;'>
+                <h1 style='color:{text_color}; font-size:48px;'>{emoji} {phase}</h1>
+                <h2 style='font-size:36px;'>라운드 {round_num}/3</h2>
+                <p style='font-size:20px;'>{instruction}</p>
+                <div style='margin-top:20px; font-size:18px; color:#666;'>
+                    천천히 숫자를 세며 호흡하세요<br>
+                    {phase == "들이쉬기" and "1... 2... 3... 4..." or "1... 2... 3... 4... 5... 6... 7... 8..."}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            col1, col2, col3 = st.columns([1,2,1])
+            with col2:
+                if st.button(button_text, use_container_width=True, type="primary"):
+                    st.session_state.breathing_step += 1
+                    if st.session_state.breathing_step > 6:
+                        st.session_state.think_hard_points += 10
+                    st.rerun()
+        
+        else:  # 완료
             breathing_container.markdown("""
             <div class="success-box">
             <h3 style='text-align:center;'>✅ 완벽한 릴렉싱 상태!</h3>
@@ -345,16 +409,16 @@ else:
             의식의 무대로 이동하여 Think Hard를 시작하세요!</p>
             </div>
             """, unsafe_allow_html=True)
-            st.session_state.breathing_active = False
-            st.session_state.think_hard_points += 10
-            time.sleep(3)
-            st.rerun()
+            
+            if st.button("🔄 다시 하기", use_container_width=True):
+                st.session_state.breathing_step = 0
+                st.rerun()
     
-    # 탭3: 의식의 무대
+    # 탭3: 의식의 무대 (타이머 최적화)
     with tab3:
         st.markdown("### 🎭 의식의 무대 - Think Hard 실천")
         
-        # 모드 선택 (황농문 교수님 타겟별)
+        # 모드 선택
         mode = st.radio("몰입 모드 선택", 
                        ["🏢 기업 임원 모드", "⛳ 프로 선수 모드", "📚 수험생 모드", "🎯 일반 몰입"],
                        horizontal=True)
@@ -380,12 +444,16 @@ else:
                                   index=2)
         
         with col2:
-            if st.button("🔦 의식의 무대 조명 ON", use_container_width=True, type="primary", key="stage_start"):
+            if st.button("🔦 의식의 무대 조명 ON", use_container_width=True, type="primary"):
                 if topic:
                     st.session_state.stage_active = True
                     st.session_state.focus_topic = topic
                     st.session_state.immersion_time = minutes
+                    st.session_state.start_time = datetime.now()
+                    st.session_state.timer_end_time = datetime.now() + timedelta(minutes=minutes)
                     st.session_state.timer_running = True
+                    st.session_state.session_completed = False
+                    st.rerun()
                 else:
                     st.error("Think Hard할 주제를 입력해주세요!")
         
@@ -401,26 +469,51 @@ else:
             </div>
             """, unsafe_allow_html=True)
             
-            # 타이머
-            if st.session_state.timer_running:
-                timer_placeholder = st.empty()
-                progress_bar = st.progress(0)
-                end_time = time.time() + (st.session_state.immersion_time * 60)
-                total_seconds = st.session_state.immersion_time * 60
+            # 타이머 표시
+            timer_placeholder = st.empty()
+            progress_bar = st.progress(0)
+            
+            if st.session_state.timer_running and st.session_state.start_time:
+                now = datetime.now()
                 
-                while time.time() < end_time and st.session_state.timer_running:
-                    remaining = int(end_time - time.time())
-                    elapsed = total_seconds - remaining
-                    progress = elapsed / total_seconds
+                if now < st.session_state.timer_end_time:
+                    # 타이머 진행 중
+                    elapsed = (now - st.session_state.start_time).total_seconds()
+                    total_seconds = st.session_state.immersion_time * 60
+                    remaining = int(total_seconds - elapsed)
                     
-                    mins, secs = divmod(remaining, 60)
-                    timer_placeholder.markdown(f'<div class="timer-display">{mins:02d}:{secs:02d}</div>', 
-                                              unsafe_allow_html=True)
+                    mins, secs = divmod(max(0, remaining), 60)
+                    timer_placeholder.markdown(f"""
+                    <div class="timer-display">{mins:02d}:{secs:02d}</div>
+                    <p style="text-align:center; color:#888;">
+                        타이머를 업데이트하려면 아래 버튼을 클릭하거나<br>
+                        페이지를 새로고침(F5)하세요
+                    </p>
+                    """, unsafe_allow_html=True)
+                    
+                    progress = min(1.0, elapsed / total_seconds)
                     progress_bar.progress(progress)
-                    time.sleep(1)
+                    
+                    # 수동 업데이트 버튼
+                    col1, col2, col3 = st.columns([1,2,1])
+                    with col2:
+                        if st.button("🔄 타이머 업데이트", use_container_width=True):
+                            st.rerun()
                 
-                if st.session_state.timer_running:
-                    st.balloons()
+                else:
+                    # 타이머 완료
+                    if not st.session_state.session_completed:
+                        st.balloons()
+                        st.session_state.total_sessions += 1
+                        st.session_state.total_time += st.session_state.immersion_time
+                        st.session_state.think_hard_points += st.session_state.immersion_time * 2
+                        st.session_state.session_completed = True
+                    
+                    timer_placeholder.markdown("""
+                    <div class="timer-display">00:00</div>
+                    """, unsafe_allow_html=True)
+                    progress_bar.progress(1.0)
+                    
                     st.markdown("""
                     <div class="hwang-theory-box">
                     <h3 style='text-align:center;'>🎉 집중 세션 완료!</h3>
@@ -429,11 +522,6 @@ else:
                     걸을 때도, 밥 먹을 때도, 잠들기 전에도..."</p>
                     </div>
                     """, unsafe_allow_html=True)
-                    st.session_state.total_sessions += 1
-                    st.session_state.total_time += st.session_state.immersion_time
-                    st.session_state.think_hard_points += minutes * 2
-                    st.session_state.timer_running = False
-                    st.session_state.stage_active = False
             
             # 잡념 보관함 (1초 원칙)
             st.markdown("#### 💭 잡념 보관함 (1초 처리)")
@@ -445,12 +533,15 @@ else:
                     if distraction:
                         st.session_state.distractions.append(distraction)
                         st.success("1초 처리 완료!")
+                        # rerun 제거 - 자동 업데이트됨
             
             # 보관된 잡념 표시
             if st.session_state.distractions:
                 st.markdown("**관객석으로 보낸 잡념들:**")
-                for d in st.session_state.distractions:
-                    st.markdown(f'<div class="postit">💭 {d}</div>', unsafe_allow_html=True)
+                distraction_html = ""
+                for d in st.session_state.distractions[-5:]:  # 최근 5개만 표시
+                    distraction_html += f'<div class="postit">💭 {d}</div>'
+                st.markdown(distraction_html, unsafe_allow_html=True)
             
             # Think Hard 노트
             st.markdown("#### 📝 Think Hard 노트")
@@ -476,11 +567,17 @@ else:
             if st.button("🛑 세션 종료 (16시간 시작)", type="secondary", use_container_width=True):
                 st.session_state.stage_active = False
                 st.session_state.timer_running = False
+                if not st.session_state.session_completed:
+                    # 중도 종료 시에도 부분 점수 부여
+                    if st.session_state.start_time:
+                        elapsed_minutes = int((datetime.now() - st.session_state.start_time).total_seconds() / 60)
+                        st.session_state.total_time += elapsed_minutes
+                        st.session_state.think_hard_points += elapsed_minutes
                 st.rerun()
             
             st.markdown('</div>', unsafe_allow_html=True)
     
-    # 탭4: 몰입 기록
+    # 탭4: 몰입 기록 (변경 없음)
     with tab4:
         st.markdown("### 📊 나의 Think Hard 기록")
         
@@ -543,18 +640,20 @@ else:
             """, unsafe_allow_html=True)
             
             # 예상 성과
-            st.markdown("""
-            #### 📈 예상 몰입 성과
-            """)
+            st.markdown("#### 📈 예상 몰입 성과")
             
             total_immersion_hours = (st.session_state.total_time * 16) / 60
-            st.markdown(f"""
-            - **실제 집중 시간**: {st.session_state.total_time}분
-            - **예상 이미지 트레이닝**: {total_immersion_hours:.1f}시간
-            - **Think Hard 효율**: {min(100, points/10):.1f}%
-            """)
+            efficiency = min(100, points/10)
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("실제 집중", f"{st.session_state.total_time}분")
+            with col2:
+                st.metric("예상 이미지 트레이닝", f"{total_immersion_hours:.1f}시간")
+            with col3:
+                st.metric("Think Hard 효율", f"{efficiency:.1f}%")
     
-    # 탭5: 몰입아카데미
+    # 탭5: 몰입아카데미 (변경 없음)
     with tab5:
         st.markdown("### 🎓 황농문 교수님 몰입아카데미")
         
@@ -609,9 +708,9 @@ st.markdown("""
 <div style='text-align:center; color:#888; padding:20px;'>
 <b>🎓 Based on Prof. Hwang Nong-Moon's 16-Hour Immersion Theory</b><br>
 Seoul National University Honorary Professor<br>
-Author of "Immersion" Series | Founder of Immersion Academy<br><br>
+<b>Version 6.0 - Performance Optimized</b><br><br>
 <b>🌿 Developed by 갯버들 (한승희)</b><br>
-K-Immersion Program | Global Launch 2025<br>
+K-Immersion Program | Optimized for Free Hosting<br>
 🌐 URL: https://immersion-program.onrender.com/<br>
 📧 Contact: sjks007@gmail.com<br><br>
 <i>"From Work Hard to Think Hard"</i>
