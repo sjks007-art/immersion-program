@@ -465,7 +465,7 @@ else:
             st.markdown(f"""
             <div class="spotlight">
                 <div class="focus-topic">🎯 {st.session_state.focus_topic}</div>
-                <p style="color:#666; margin-top:10px;">의식의 무대에 오른 주제</p>
+                <p style="color:#333; margin-top:10px; font-weight:bold;">의식의 무대에 오른 주제</p>
             </div>
             """, unsafe_allow_html=True)
             
