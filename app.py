@@ -61,40 +61,35 @@ def load_css():
         margin: 20px 0;
         min-height: 400px;
         border: 2px solid #764ba2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
     }
     
     .spotlight {
         background: radial-gradient(circle at center, 
-            rgba(255,215,0,0.4) 0%, 
-            rgba(255,215,0,0.2) 40%, 
-            rgba(255,215,0,0.1) 60%, 
+            rgba(255,215,0,0.8) 0%, 
+            rgba(255,215,0,0.4) 40%, 
+            rgba(255,215,0,0.2) 60%, 
             transparent 80%);
         border-radius: 50%;
         padding: 60px;
         text-align: center;
-        margin: 20px auto;
-        max-width: 500px;
-        min-height: 200px;
+        min-width: 300px;
+        min-height: 300px;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        box-shadow: 0 0 100px rgba(255,215,0,0.5);
+        animation: pulse 3s infinite;
+        z-index: 1;
         position: relative;
     }
     
-    .spotlight::before {
-        content: '';
-        position: absolute;
-        top: -20px;
-        left: -20px;
-        right: -20px;
-        bottom: -20px;
-        background: radial-gradient(circle at center,
-            rgba(255,215,0,0.3) 0%,
-            transparent 70%);
-        border-radius: 50%;
-        z-index: -1;
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.9; }
     }
     
     .focus-topic {
@@ -102,11 +97,20 @@ def load_css():
         font-size: 32px;
         font-weight: bold;
         text-shadow: 
-            0 0 10px rgba(255,215,0,1),
-            0 0 20px rgba(255,215,0,0.8),
-            0 0 30px rgba(255,215,0,0.6),
-            0 0 40px rgba(255,215,0,0.4);
-        letter-spacing: 1px;
+            0 0 10px rgba(255,215,0,0.9),
+            0 0 20px rgba(255,215,0,0.7),
+            0 0 30px rgba(255,215,0,0.5);
+        z-index: 2;
+        position: relative;
+    }
+    
+    .spotlight p {
+        color: #f0f0f0;
+        margin-top: 15px;
+        font-size: 18px;
+        font-weight: 500;
+        z-index: 2;
+        position: relative;
     }
     
     .timer-display {
