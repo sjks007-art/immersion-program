@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 # app.py - 5분 몰입 프로그램 (황농문 교수 이론 기반)
-# Version: 1.1 - plotly 없는 안정화 버전
+# Version: 2.0 - 타이머 자동업데이트 + 몰입아카데미 홍보
 # Date: 2025.09.16
 
 import streamlit as st
 from datetime import datetime, timedelta
 import json
 import random
-# plotly 제거 - 기본 streamlit 차트 사용
-# import pandas as pd  # 필요시 나중에 추가
-# import plotly.graph_objects as go  # 제거
+import time
 
 # 페이지 설정
 st.set_page_config(
@@ -60,53 +58,6 @@ st.markdown("""
         margin: 20px 0;
     }
     
-    .quick-start-btn {
-        background: #28a745;
-        color: white;
-        padding: 15px 30px;
-        border-radius: 30px;
-        font-size: 20px;
-        font-weight: bold;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 5px 15px rgba(40,167,69,0.3);
-    }
-    
-    .category-card {
-        background: #f8f9fa;
-        border-left: 4px solid #667eea;
-        padding: 15px;
-        margin: 10px 0;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-    
-    .category-card:hover {
-        transform: translateX(5px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    
-    .streak-badge {
-        background: #ffd700;
-        color: #333;
-        padding: 10px 20px;
-        border-radius: 20px;
-        font-weight: bold;
-        display: inline-block;
-        margin: 10px;
-    }
-    
-    .checklist-item {
-        background: white;
-        border: 2px solid #e9ecef;
-        padding: 10px;
-        margin: 5px 0;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-    }
-    
     .stat-card {
         background: white;
         border-radius: 10px;
@@ -125,6 +76,24 @@ st.markdown("""
         color: #6c757d;
         font-size: 14px;
         margin-top: 5px;
+    }
+    
+    .link-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 20px;
+        text-decoration: none;
+        display: inline-block;
+        margin: 10px;
+        font-weight: bold;
+    }
+    
+    .report-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -145,7 +114,9 @@ def init_session_state():
         'today_sessions': 0,
         'checklist_done': [],
         'selected_tab': '⚡ 시작하기',
-        'session_history': []  # 세션 기록 저장
+        'session_history': [],
+        'timer_completed': False,
+        'daily_report': []  # 일일 몰입 보고서용
     }
     
     for key, value in defaults.items():
@@ -214,9 +185,63 @@ PREPARATION_CHECKLIST = [
     "💧 물 한잔 준비"
 ]
 
+# 몰입 보고서 생성 함수
+def generate_immersion_report():
+    if not st.session_state.session_history:
+        return None
+    
+    today = datetime.now()
+    today_sessions = [s for s in st.session_state.session_history 
+                     if datetime.fromisoformat(s['date']).date() == today.date()]
+    
+    if not today_sessions:
+        return None
+    
+    report = f"""
+    📋 **{st.session_state.user_name}님의 일일 몰입 보고서**
+    
+    📅 날짜: {today.strftime('%Y년 %m월 %d일')}
+    
+    ✅ **오늘의 성과**
+    - 총 몰입 횟수: {len(today_sessions)}회
+    - 총 몰입 시간: {len(today_sessions) * 5}분
+    - 주요 활동: {', '.join(set([s['topic'] for s in today_sessions]))}
+    
+    💡 **몰입 인사이트**
+    - 가장 집중이 잘 된 시간: {datetime.fromisoformat(today_sessions[0]['date']).strftime('%H시')}
+    - 연속 몰입 일수: {st.session_state.streak_days}일
+    
+    🎯 **내일의 목표**
+    - 목표 몰입 횟수: {len(today_sessions) + 1}회
+    - 추천 몰입 시간: 오전 중 2회, 오후 중 3회
+    
+    💪 **황농문 교수님의 한마디**
+    "오늘도 Think Hard를 실천하셨군요! 
+    매일 조금씩 몰입하다 보면 큰 변화가 일어납니다."
+    
+    ---
+    🔗 몰입아카데미에서 더 깊은 몰입을 경험하세요
+    """
+    
+    return report
+
 # 헤더
 st.markdown('<h1 class="main-header">⚡ 5분 몰입의 기적</h1>', unsafe_allow_html=True)
 st.markdown(f'<div class="sub-header">{get_greeting()}</div>', unsafe_allow_html=True)
+
+# 몰입아카데미 링크 (상단)
+col1, col2, col3 = st.columns([1,2,1])
+with col2:
+    st.markdown("""
+    <div style='text-align:center; margin-bottom:20px;'>
+        <a href='https://www.youtube.com/@molipacademy' target='_blank' style='margin:0 10px;'>
+            📺 황농문 교수 유튜브
+        </a>
+        <a href='https://molip.co.kr/' target='_blank' style='margin:0 10px;'>
+            🎓 몰입아카데미
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
 
 # 사용자 이름 입력
 if not st.session_state.user_name:
@@ -271,9 +296,9 @@ else:
         """, unsafe_allow_html=True)
     
     # 탭 메뉴
-    tab_names = ["⚡ 시작하기", "📊 기록", "🎯 습관", "💡 인사이트"]
+    tab_names = ["⚡ 시작하기", "📊 기록", "🎯 습관", "💡 인사이트", "📋 보고서"]
     selected_tab = st.radio("", tab_names, 
-                           index=tab_names.index(st.session_state.selected_tab),
+                           index=tab_names.index(st.session_state.selected_tab) if st.session_state.selected_tab in tab_names else 0,
                            horizontal=True, key="tab_selector")
     
     if selected_tab != st.session_state.selected_tab:
@@ -286,62 +311,75 @@ else:
     if st.session_state.selected_tab == "⚡ 시작하기":
         # 타이머 활성화 상태
         if st.session_state.timer_active:
-            # 타이머 표시
+            # 타이머 표시 (자동 업데이트)
+            timer_placeholder = st.empty()
+            
             if st.session_state.end_time:
-                now = datetime.now()
-                if now < st.session_state.end_time:
-                    remaining = (st.session_state.end_time - now).total_seconds()
-                    mins = int(remaining // 60)
-                    secs = int(remaining % 60)
-                    
-                    st.markdown(f"""
-                    <div class="immersion-card">
-                        <h2 style="color:white;">🎯 {st.session_state.current_topic}</h2>
-                        <div class="timer-display">{mins:02d}:{secs:02d}</div>
-                        <p style="color:white; opacity:0.9;">집중하세요! 5분은 금방입니다</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    col1, col2, col3 = st.columns([1,2,1])
-                    with col2:
-                        if st.button("🔄 타이머 업데이트", use_container_width=True):
+                while True:
+                    now = datetime.now()
+                    if now < st.session_state.end_time:
+                        remaining = (st.session_state.end_time - now).total_seconds()
+                        mins = int(remaining // 60)
+                        secs = int(remaining % 60)
+                        
+                        timer_placeholder.markdown(f"""
+                        <div class="immersion-card">
+                            <h2 style="color:white;">🎯 {st.session_state.current_topic}</h2>
+                            <div class="timer-display">{mins:02d}:{secs:02d}</div>
+                            <p style="color:white; opacity:0.9;">집중하세요! 5분은 금방입니다</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # 중단 버튼
+                        col1, col2, col3 = st.columns([1,2,1])
+                        with col2:
+                            if st.button("⏹️ 중단하기", use_container_width=True, type="secondary", key="stop_timer"):
+                                st.session_state.timer_active = False
+                                st.rerun()
+                        
+                        # 1초 대기
+                        time.sleep(1)
+                    else:
+                        # 타이머 완료
+                        timer_placeholder.empty()
+                        st.balloons()
+                        st.success("🎉 5분 몰입 완료! 훌륭합니다!")
+                        
+                        # 세션 기록 추가
+                        st.session_state.session_history.append({
+                            'date': datetime.now().isoformat(),
+                            'topic': st.session_state.current_topic,
+                            'category': st.session_state.current_category
+                        })
+                        
+                        st.session_state.total_sessions += 1
+                        st.session_state.today_sessions += 1
+                        st.session_state.total_minutes += 5
+                        st.session_state.timer_active = False
+                        
+                        # 연속일수 업데이트
+                        today = datetime.now().date()
+                        if st.session_state.last_session_date:
+                            last_date = datetime.fromisoformat(st.session_state.last_session_date).date()
+                            if (today - last_date).days == 1:
+                                st.session_state.streak_days += 1
+                            elif today != last_date:
+                                st.session_state.streak_days = 1
+                        else:
+                            st.session_state.streak_days = 1
+                        
+                        st.session_state.last_session_date = datetime.now().isoformat()
+                        
+                        # 몰입 후 피드백
+                        st.info("💡 몰입 후 1분간 휴식하고 느낀점을 기록해보세요")
+                        
+                        # 느낀점 기록
+                        feedback = st.text_area("오늘의 몰입은 어떠셨나요?", key="feedback_input")
+                        
+                        if st.button("다시 시작", use_container_width=True, type="primary", key="restart"):
                             st.rerun()
                         
-                        if st.button("⏹️ 중단하기", use_container_width=True, type="secondary"):
-                            st.session_state.timer_active = False
-                            st.rerun()
-                else:
-                    # 타이머 완료
-                    st.balloons()
-                    st.success("🎉 5분 몰입 완료! 훌륭합니다!")
-                    
-                    # 세션 기록 추가
-                    st.session_state.session_history.append({
-                        'date': datetime.now().isoformat(),
-                        'topic': st.session_state.current_topic,
-                        'category': st.session_state.current_category
-                    })
-                    
-                    st.session_state.total_sessions += 1
-                    st.session_state.today_sessions += 1
-                    st.session_state.total_minutes += 5
-                    st.session_state.timer_active = False
-                    
-                    # 연속일수 업데이트
-                    today = datetime.now().date()
-                    if st.session_state.last_session_date:
-                        last_date = datetime.fromisoformat(st.session_state.last_session_date).date()
-                        if (today - last_date).days == 1:
-                            st.session_state.streak_days += 1
-                        elif today != last_date:
-                            st.session_state.streak_days = 1
-                    else:
-                        st.session_state.streak_days = 1
-                    
-                    st.session_state.last_session_date = datetime.now().isoformat()
-                    
-                    if st.button("다시 시작", use_container_width=True, type="primary"):
-                        st.rerun()
+                        break
         
         else:
             # 빠른 시작
@@ -367,7 +405,6 @@ else:
                 with cols[idx % 2]:
                     if st.button(category, use_container_width=True, key=f"cat_{idx}"):
                         st.session_state.current_category = category
-                        # 랜덤 주제 선택
                         st.session_state.current_topic = random.choice(topics)
                         st.session_state.timer_active = True
                         st.session_state.start_time = datetime.now()
@@ -388,35 +425,20 @@ else:
         st.markdown("### 📊 나의 몰입 기록")
         
         # 오늘의 진행률
-        daily_goal = 6  # 하루 6회 목표
+        daily_goal = 6
         progress = min(1.0, st.session_state.today_sessions / daily_goal)
         st.progress(progress)
         st.caption(f"오늘 목표: {st.session_state.today_sessions}/{daily_goal}회")
         
-        # 주간 통계
-        st.markdown("#### 📅 이번 주 몰입 패턴")
+        # 최근 세션
+        st.markdown("#### 📅 최근 몰입 기록")
         if st.session_state.session_history:
-            # 간단한 텍스트 기반 표시
-            st.info(f"총 {len(st.session_state.session_history)}회의 몰입 세션을 완료했습니다!")
-            
-            # 최근 5개 세션 표시
-            st.markdown("##### 최근 몰입 기록")
-            recent = st.session_state.session_history[-5:][::-1]
+            recent = st.session_state.session_history[-10:][::-1]
             for session in recent:
                 date = datetime.fromisoformat(session['date'])
                 st.write(f"• {date.strftime('%m/%d %H:%M')} - {session['topic']}")
         else:
             st.info("몰입을 시작하면 기록이 표시됩니다")
-        
-        # 최근 세션
-        st.markdown("#### 🕐 마지막 몰입")
-        if st.session_state.total_sessions > 0:
-            st.write(f"- 주제: {st.session_state.current_topic or '주제 없음'}")
-            if st.session_state.last_session_date:
-                last_time = datetime.fromisoformat(st.session_state.last_session_date)
-                st.write(f"- 시간: {last_time.strftime('%H:%M')}")
-        else:
-            st.info("아직 완료한 세션이 없습니다")
     
     elif st.session_state.selected_tab == "🎯 습관":
         st.markdown("### 🎯 21일 몰입 습관 만들기")
@@ -468,9 +490,22 @@ else:
         </div>
         """, unsafe_allow_html=True)
         
-        # 통계 분석
-        col1, col2 = st.columns(2)
+        # 황농문 교수 유튜브 영상 추천
+        st.markdown("#### 📺 추천 영상")
+        st.markdown("""
+        <div style='background:#f0f2f6; padding:20px; border-radius:10px;'>
+            <h4>황농문 교수의 몰입 강의</h4>
+            <p>더 깊은 몰입을 원하신다면 황농문 교수님의 강의를 들어보세요!</p>
+            <a href='https://www.youtube.com/@molipacademy' target='_blank' 
+               style='background:#ff0000; color:white; padding:10px 20px; 
+                      border-radius:5px; text-decoration:none; display:inline-block;'>
+                유튜브에서 보기
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
         
+        # 통계
+        col1, col2 = st.columns(2)
         with col1:
             st.markdown("#### 📊 몰입 통계")
             if st.session_state.total_sessions > 0:
@@ -478,8 +513,6 @@ else:
                 st.metric("일평균 몰입", f"{avg_daily:.1f}회")
                 st.metric("총 몰입 시간", f"{st.session_state.total_minutes}분")
                 st.metric("시간 환산", f"{st.session_state.total_minutes/60:.1f}시간")
-            else:
-                st.info("첫 몰입을 시작해보세요!")
         
         with col2:
             st.markdown("#### 🎯 몰입 레벨")
@@ -492,47 +525,56 @@ else:
             ]
             
             current_level = "🌱 몰입 씨앗"
-            next_threshold = 10
-            
             for threshold, level in level_thresholds:
                 if st.session_state.total_sessions >= threshold:
                     current_level = level
-                else:
-                    next_threshold = threshold
-                    break
             
             st.info(f"현재: {current_level}")
-            if st.session_state.total_sessions < 200:
-                st.caption(f"다음 레벨까지: {next_threshold - st.session_state.total_sessions}회")
+    
+    elif st.session_state.selected_tab == "📋 보고서":
+        st.markdown("### 📋 몰입 보고서")
         
-        # 성장 메시지
-        st.markdown("#### 📈 몰입 성장")
-        if st.session_state.total_sessions > 0:
-            st.success(f"""
-            🎯 {st.session_state.user_name}님은 지금까지 **{st.session_state.total_sessions}회**의 몰입을 완료했습니다!
+        # 일일 보고서 생성
+        report = generate_immersion_report()
+        
+        if report:
+            st.markdown(report)
             
-            총 **{st.session_state.total_minutes}분** 동안 깊은 집중을 경험하셨네요.
-            
-            앞으로도 꾸준히 5분 몰입을 실천하면 놀라운 변화가 일어날 것입니다!
-            """)
+            # 보고서 다운로드 버튼
+            st.download_button(
+                label="📥 보고서 다운로드",
+                data=report,
+                file_name=f"몰입보고서_{datetime.now().strftime('%Y%m%d')}.txt",
+                mime="text/plain"
+            )
         else:
-            st.info("첫 몰입을 시작하면 성장 기록이 나타납니다")
+            st.info("오늘의 몰입을 시작하면 보고서가 자동으로 생성됩니다!")
         
-        # 몰입 팁 카드
-        st.markdown("#### 💡 몰입 마스터 되기")
-        
-        tips = {
-            "🎯 목표": "하루 6회, 30분 몰입을 목표로 시작하세요",
-            "⏰ 시간": "매일 같은 시간에 몰입하면 습관이 됩니다",
-            "📱 환경": "스마트폰을 시야에서 치우세요",
-            "🧘 준비": "몰입 전 3번의 심호흡은 필수입니다",
-            "📝 기록": "몰입 후 느낀점을 기록하면 성장이 보입니다"
-        }
-        
-        cols = st.columns(2)
-        for idx, (title, tip) in enumerate(tips.items()):
-            with cols[idx % 2]:
-                st.info(f"{title}\n\n{tip}")
+        # 몰입아카데미 안내
+        st.markdown("""
+        <div style='background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    color:white; padding:30px; border-radius:15px; margin-top:30px;'>
+            <h3 style='color:white;'>🎓 몰입아카데미에서 만나요!</h3>
+            <p style='color:white;'>
+            황농문 교수님의 직접 지도로 더 깊은 몰입을 경험하세요.
+            16시간 몰입 이론의 모든 것을 배울 수 있습니다.
+            </p>
+            <div style='margin-top:20px;'>
+                <a href='https://molip.co.kr/' target='_blank' 
+                   style='background:white; color:#667eea; padding:10px 30px; 
+                          border-radius:25px; text-decoration:none; font-weight:bold;
+                          display:inline-block; margin-right:10px;'>
+                    몰입아카데미 방문
+                </a>
+                <a href='https://www.youtube.com/@molipacademy' target='_blank' 
+                   style='background:white; color:#667eea; padding:10px 30px; 
+                          border-radius:25px; text-decoration:none; font-weight:bold;
+                          display:inline-block;'>
+                    유튜브 구독
+                </a>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
 # 푸터
 st.markdown("---")
@@ -540,6 +582,8 @@ st.markdown("""
 <div style='text-align:center; color:#888; padding:20px;'>
 <b>5분 몰입의 기적</b><br>
 황농문 교수 몰입 이론 기반 | 직장인 특화 프로그램<br>
-개발: 갯버들 | 2025.09.16
+개발: 갯버들 | 2025.09.16<br>
+<a href='https://molip.co.kr/' target='_blank'>몰입아카데미</a> | 
+<a href='https://www.youtube.com/@molipacademy' target='_blank'>유튜브</a>
 </div>
 """, unsafe_allow_html=True)
