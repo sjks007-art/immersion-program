@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 # app.py - 5분 몰입 프로그램 (황농문 교수 이론 기반)
-# Version: 1.0 - 직장인 특화 버전
-# Date: 2025.09.12
+# Version: 1.1 - plotly 없는 안정화 버전
+# Date: 2025.09.16
 
 import streamlit as st
 from datetime import datetime, timedelta
 import json
 import random
-import pandas as pd
-import plotly.graph_objects as go
+# plotly 제거 - 기본 streamlit 차트 사용
+# import pandas as pd  # 필요시 나중에 추가
+# import plotly.graph_objects as go  # 제거
 
 # 페이지 설정
 st.set_page_config(
@@ -392,27 +393,28 @@ else:
         st.progress(progress)
         st.caption(f"오늘 목표: {st.session_state.today_sessions}/{daily_goal}회")
         
-        # 주간 통계 (임시 데이터)
+        # 주간 통계
         st.markdown("#### 📅 이번 주 몰입 패턴")
         if st.session_state.session_history:
-            # 최근 7일 데이터
-            df_sessions = pd.DataFrame(st.session_state.session_history)
-            df_sessions['date'] = pd.to_datetime(df_sessions['date'])
-            df_sessions['day'] = df_sessions['date'].dt.date
+            # 간단한 텍스트 기반 표시
+            st.info(f"총 {len(st.session_state.session_history)}회의 몰입 세션을 완료했습니다!")
             
-            # 날짜별 세션 수 계산
-            daily_counts = df_sessions.groupby('day').size().reset_index(name='count')
-            
-            # 막대 그래프
-            st.bar_chart(daily_counts.set_index('day')['count'])
+            # 최근 5개 세션 표시
+            st.markdown("##### 최근 몰입 기록")
+            recent = st.session_state.session_history[-5:][::-1]
+            for session in recent:
+                date = datetime.fromisoformat(session['date'])
+                st.write(f"• {date.strftime('%m/%d %H:%M')} - {session['topic']}")
         else:
-            st.info("주간 통계는 몰입을 시작하면 표시됩니다")
+            st.info("몰입을 시작하면 기록이 표시됩니다")
         
         # 최근 세션
-        st.markdown("#### 🕐 최근 몰입 세션")
+        st.markdown("#### 🕐 마지막 몰입")
         if st.session_state.total_sessions > 0:
-            st.write(f"- 마지막 세션: {st.session_state.current_topic or '주제 없음'}")
-            st.write(f"- 완료 시간: {datetime.now().strftime('%H:%M')}")
+            st.write(f"- 주제: {st.session_state.current_topic or '주제 없음'}")
+            if st.session_state.last_session_date:
+                last_time = datetime.fromisoformat(st.session_state.last_session_date)
+                st.write(f"- 시간: {last_time.strftime('%H:%M')}")
         else:
             st.info("아직 완료한 세션이 없습니다")
     
@@ -503,40 +505,18 @@ else:
             if st.session_state.total_sessions < 200:
                 st.caption(f"다음 레벨까지: {next_threshold - st.session_state.total_sessions}회")
         
-        # 성장 곡선
-        st.markdown("#### 📈 몰입 성장 곡선")
-        
-        if st.session_state.session_history:
-            # 날짜별 집계
-            df_sessions = pd.DataFrame(st.session_state.session_history)
-            df_sessions['date'] = pd.to_datetime(df_sessions['date'])
-            df_sessions['day'] = df_sessions['date'].dt.date
-            daily_counts = df_sessions.groupby('day').size().reset_index(name='count')
+        # 성장 메시지
+        st.markdown("#### 📈 몰입 성장")
+        if st.session_state.total_sessions > 0:
+            st.success(f"""
+            🎯 {st.session_state.user_name}님은 지금까지 **{st.session_state.total_sessions}회**의 몰입을 완료했습니다!
             
-            # 누적 그래프
-            daily_counts['cumulative'] = daily_counts['count'].cumsum()
+            총 **{st.session_state.total_minutes}분** 동안 깊은 집중을 경험하셨네요.
             
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(
-                x=daily_counts['day'],
-                y=daily_counts['cumulative'],
-                mode='lines+markers',
-                name='누적 몰입',
-                line=dict(color='#667eea', width=3),
-                marker=dict(size=8)
-            ))
-            
-            fig.update_layout(
-                title="누적 몰입 성장",
-                xaxis_title="날짜",
-                yaxis_title="누적 세션 수",
-                height=300,
-                showlegend=False
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
+            앞으로도 꾸준히 5분 몰입을 실천하면 놀라운 변화가 일어날 것입니다!
+            """)
         else:
-            st.info("몰입을 시작하면 성장 그래프가 나타납니다")
+            st.info("첫 몰입을 시작하면 성장 기록이 나타납니다")
         
         # 몰입 팁 카드
         st.markdown("#### 💡 몰입 마스터 되기")
@@ -560,6 +540,6 @@ st.markdown("""
 <div style='text-align:center; color:#888; padding:20px;'>
 <b>5분 몰입의 기적</b><br>
 황농문 교수 몰입 이론 기반 | 직장인 특화 프로그램<br>
-개발: 갯버들 | 2025.09.12
+개발: 갯버들 | 2025.09.16
 </div>
 """, unsafe_allow_html=True)
