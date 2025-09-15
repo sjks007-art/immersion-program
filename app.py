@@ -2,15 +2,9 @@
 # app.py - 5분 몰입 프로그램 (황농문 교수 이론 기반)
 # Created by 갯버들 (한승희)
 # Based on Prof. Hwang Nong-Moon's Immersion Theory
-# Seoul National University Honorary Professor
 # 
-# 핵심 이론:
-# - 16시간 이론을 5분으로 실천 가능하게
-# - Work Hard → Think Hard 패러다임 전환
-# - 직장인을 위한 마이크로 몰입
-#
 # GitHub: https://github.com/sjks007-art/immersion-program
-# Version: 3.0 - 최종 완성판
+# Version: 4.0 - plotly 제거 버전
 # Date: 2025.09.15
 
 import streamlit as st
@@ -19,8 +13,6 @@ import json
 import random
 import time
 import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
 
 # 페이지 설정
 st.set_page_config(
@@ -188,6 +180,12 @@ st.markdown("""
         color: #6c757d;
     }
     
+    .challenge-day.missed {
+        background: #f8f9fa;
+        color: #dee2e6;
+        opacity: 0.5;
+    }
+    
     @keyframes pulse {
         0% { transform: scale(1); }
         50% { transform: scale(1.1); }
@@ -294,18 +292,29 @@ IMMERSION_QUOTES = [
     "슬로싱킹으로 천천히 오래 생각하세요. - 황농문"
 ]
 
-# 레벨 계산
+# 레벨 계산 (도파민 보상 시스템 강화)
 def calculate_level():
-    if st.session_state.total_sessions < 5:
-        return "🌱 초급", "#28a745"
-    elif st.session_state.total_sessions < 20:
-        return "🌿 중급", "#17a2b8"
-    elif st.session_state.total_sessions < 50:
-        return "🌳 고급", "#764ba2"
-    elif st.session_state.total_sessions < 100:
-        return "⭐ 전문가", "#ffc107"
-    else:
-        return "🏆 마스터", "#ffd700"
+    sessions = st.session_state.total_sessions
+    
+    # 레벨 임계값과 뱃지
+    levels = [
+        (100, "🏆 마스터", "#ffd700", "몰입의 경지에 도달하셨습니다!"),
+        (50, "⭐ 전문가", "#ffc107", "당신은 진정한 몰입 전문가입니다!"),
+        (20, "🌳 고급", "#764ba2", "깊은 몰입을 경험하고 계십니다!"),
+        (5, "🌿 중급", "#17a2b8", "몰입이 습관이 되어가고 있어요!"),
+        (0, "🌱 초급", "#28a745", "몰입의 여정을 시작하셨군요!")
+    ]
+    
+    for threshold, badge, color, message in levels:
+        if sessions >= threshold:
+            # 레벨업 직전에 특별 메시지 (다음 레벨까지 2세션 이하)
+            next_threshold = next((l[0] for l in levels if l[0] > sessions), None)
+            if next_threshold and next_threshold - sessions <= 2:
+                message += f" (곧 레벨업! {next_threshold - sessions}세션 남음)"
+            
+            return badge, color
+    
+    return "🌱 초급", "#28a745"
 
 # 보고서 생성
 def generate_report():
@@ -348,39 +357,124 @@ def generate_report():
     
     return report
 
-# 21일 챌린지 표시
+# 21일 챌린지 표시 (도파민 최적화 버전)
 def display_21_day_challenge():
-    st.markdown("### 🎯 21일 몰입 챌린지")
+    st.markdown("### 🎯 21일 몰입 습관 만들기")
     
     if not st.session_state.challenge_start_date:
-        if st.button("챌린지 시작하기", type="primary"):
+        st.markdown("""
+        <div style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    color: white; padding: 20px; border-radius: 10px; text-align: center;'>
+            <h4>21일이면 습관이 됩니다!</h4>
+            <p>매일 5분, 작은 몰입이 큰 변화를 만듭니다</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("🚀 챌린지 시작하기", type="primary", use_container_width=True):
             st.session_state.challenge_start_date = datetime.now().date()
             st.rerun()
     else:
         start_date = st.session_state.challenge_start_date
         today = datetime.now().date()
+        days_passed = (today - start_date).days
         
-        # 21일 표시
+        # 현재 연속 기록 강조
+        completed_count = len([d for d in st.session_state.completed_days if d <= today.isoformat()])
+        
+        if st.session_state.streak_days > 0:
+            st.success(f"🔥 {st.session_state.streak_days}일 연속 몰입 중! 대단해요!")
+        
+        # 주간 뷰 (7일씩만 표시)
+        st.markdown("#### 📅 이번 주 몰입 기록")
+        
+        # 이번 주의 시작일과 끝일 계산
+        week_start = today - timedelta(days=today.weekday())
+        
         cols = st.columns(7)
-        for day in range(1, 22):
-            col_idx = (day - 1) % 7
-            challenge_date = start_date + timedelta(days=day-1)
-            
-            if challenge_date < today:
-                if challenge_date.isoformat() in st.session_state.completed_days:
-                    cols[col_idx].markdown(f'<div class="challenge-day completed">{day}</div>', unsafe_allow_html=True)
-                else:
-                    cols[col_idx].markdown(f'<div class="challenge-day future">X</div>', unsafe_allow_html=True)
-            elif challenge_date == today:
-                cols[col_idx].markdown(f'<div class="challenge-day today">{day}</div>', unsafe_allow_html=True)
-            else:
-                cols[col_idx].markdown(f'<div class="challenge-day future">{day}</div>', unsafe_allow_html=True)
+        weekdays = ["월", "화", "수", "목", "금", "토", "일"]
         
-        # 진행률
-        completed = len([d for d in st.session_state.completed_days if d <= today.isoformat()])
-        progress = completed / 21
-        st.progress(progress)
-        st.caption(f"진행률: {completed}/21일 ({progress*100:.0f}%)")
+        for i in range(7):
+            current_date = week_start + timedelta(days=i)
+            day_label = weekdays[i]
+            
+            with cols[i]:
+                if current_date < start_date:
+                    # 챌린지 시작 전
+                    st.markdown(f"""
+                    <div style='text-align:center; color:#dee2e6;'>
+                        <div style='font-size:10px;'>{day_label}</div>
+                        <div style='font-size:20px;'>-</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                elif current_date < today:
+                    # 과거
+                    if current_date.isoformat() in st.session_state.completed_days:
+                        st.markdown(f"""
+                        <div style='text-align:center;'>
+                            <div style='font-size:10px;'>{day_label}</div>
+                            <div style='font-size:24px;'>✅</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        # 놓친 날은 희미하게 표시 (실패 강조 X)
+                        st.markdown(f"""
+                        <div style='text-align:center; opacity:0.3;'>
+                            <div style='font-size:10px;'>{day_label}</div>
+                            <div style='font-size:20px;'>💤</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                elif current_date == today:
+                    # 오늘
+                    if today.isoformat() in st.session_state.completed_days:
+                        st.markdown(f"""
+                        <div style='text-align:center;'>
+                            <div style='font-size:10px; color:#667eea; font-weight:bold;'>{day_label}</div>
+                            <div style='font-size:24px;'>✅</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"""
+                        <div style='text-align:center;'>
+                            <div style='font-size:10px; color:#667eea; font-weight:bold;'>{day_label}</div>
+                            <div class='challenge-day today' style='margin:auto;'>🎯</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    # 미래 (물음표로 미스터리 유지)
+                    st.markdown(f"""
+                    <div style='text-align:center;'>
+                        <div style='font-size:10px;'>{day_label}</div>
+                        <div style='font-size:20px; color:#dee2e6;'>❓</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+        
+        # 전체 진행 상황 (긍정적 표현)
+        st.markdown("---")
+        if completed_count > 0:
+            progress = min(completed_count / 21, 1.0)
+            st.progress(progress)
+            
+            # 단계별 격려 메시지
+            if completed_count < 7:
+                stage_msg = f"🌱 시작이 반입니다! ({completed_count}/21일)"
+            elif completed_count < 14:
+                stage_msg = f"🌿 습관이 형성되고 있어요! ({completed_count}/21일)"
+            elif completed_count < 21:
+                stage_msg = f"🌳 거의 다 왔어요! ({completed_count}/21일)"
+            else:
+                stage_msg = f"🏆 21일 달성! 축하합니다! 🎉"
+                st.balloons()
+            
+            st.info(stage_msg)
+            
+            # 다음 마일스톤까지 남은 일수 (긍정적 목표 제시)
+            milestones = [7, 14, 21]
+            next_milestone = next((m for m in milestones if m > completed_count), None)
+            if next_milestone:
+                remaining = next_milestone - completed_count
+                st.caption(f"💫 다음 목표까지 {remaining}일 더 도전하면 됩니다!")
+        else:
+            st.info("🚀 오늘 첫 몰입을 시작해보세요! 작은 시작이 큰 변화를 만듭니다.")
 
 # 헤더
 st.markdown('<h1 class="main-header">⚡ 5분 몰입의 기적</h1>', unsafe_allow_html=True)
@@ -505,17 +599,51 @@ else:
                 progress = (300 - remaining) / 300
                 st.progress(progress)
                 
-                # 응원 메시지
-                if remaining > 240:
-                    st.info("🚀 시작! 깊게 집중하세요")
-                elif remaining > 180:
-                    st.info("💪 잘하고 있어요! 계속 집중!")
-                elif remaining > 120:
-                    st.info("🔥 절반 지났습니다! 조금만 더!")
-                elif remaining > 60:
-                    st.info("⭐ 거의 다 왔어요! 마지막 스퍼트!")
-                else:
-                    st.info("🏆 1분 남았습니다! 마무리 집중!")
+                # 응원 메시지 (도파민 변화를 위한 다양화)
+                encouragement_pool = {
+                    240: [  # 4분 이상
+                        "🚀 시작! 깊게 집중하세요",
+                        "🌊 몰입의 파도가 시작됩니다",
+                        "💫 당신의 뇌가 깨어나고 있어요"
+                    ],
+                    180: [  # 3분 이상
+                        "💪 잘하고 있어요! 계속 집중!",
+                        "🔥 몰입의 불꽃이 타오르고 있어요",
+                        "⚡ 뇌의 시냅스가 활발해지고 있습니다"
+                    ],
+                    120: [  # 2분 이상
+                        "🌟 절반 지났습니다! 조금만 더!",
+                        "💎 당신의 집중력이 빛나고 있어요",
+                        "🎯 목표에 가까워지고 있습니다"
+                    ],
+                    60: [  # 1분 이상
+                        "⭐ 거의 다 왔어요! 마지막 스퍼트!",
+                        "🏃 마지막 직선 구간입니다",
+                        "🌈 곧 무지개가 나타날 거예요"
+                    ],
+                    0: [  # 1분 미만
+                        "🏆 1분 남았습니다! 마무리 집중!",
+                        "🎊 곧 축하할 시간입니다",
+                        "✨ 마지막 순간까지 최선을!"
+                    ]
+                }
+                
+                # 시간대별 메시지 선택
+                for threshold, messages in encouragement_pool.items():
+                    if remaining > threshold:
+                        message = random.choice(messages)
+                        
+                        # 가끔 특별 메시지 추가 (5% 확률)
+                        if random.random() < 0.05:
+                            bonus_messages = [
+                                " 💝 (오늘따라 특별히 잘하시네요!)",
+                                " 🎁 (숨겨진 재능이 보입니다!)",
+                                " 🌠 (황농문 교수님이 지켜보고 계십니다)"
+                            ]
+                            message += random.choice(bonus_messages)
+                        
+                        st.info(message)
+                        break
                 
                 # 중단 버튼
                 if st.button("⏹️ 중단하기", use_container_width=True):
@@ -529,6 +657,42 @@ else:
                 # 완료
                 st.balloons()
                 st.success("🎉 5분 몰입 완료! 훌륭합니다!")
+                
+                # 도파민 서프라이즈 이벤트 (10% 확률)
+                if random.random() < 0.1:
+                    surprise_events = [
+                        ("🎁 서프라이즈! 오늘은 더블 포인트!", 2),
+                        ("🌟 대단해요! 숨겨진 업적 '몰입 마스터' 달성!", 1),
+                        ("💎 레어 이벤트! 황농문 교수님의 특별 격려!", 1),
+                        ("🏆 퍼펙트 타이밍! 보너스 연속일수 +1!", 1)
+                    ]
+                    event_msg, bonus = random.choice(surprise_events)
+                    st.balloons()
+                    st.success(event_msg)
+                    
+                    # 보너스 적용
+                    if "더블 포인트" in event_msg:
+                        st.session_state.total_sessions += 1  # 추가 세션
+                    elif "연속일수" in event_msg:
+                        st.session_state.streak_days += 1  # 추가 연속일
+                    
+                    # 황농문 교수님 특별 메시지
+                    if "황농문" in event_msg:
+                        special_quotes = [
+                            "당신의 몰입이 16시간으로 이어질 것입니다.",
+                            "이완된 집중의 완벽한 예시입니다!",
+                            "Think Hard의 진정한 의미를 깨달으셨군요."
+                        ]
+                        st.info(f"💬 \"{random.choice(special_quotes)}\" - 황농문")
+                
+                # 일반 완료 메시지 다양화 (예측 불가능성)
+                completion_messages = [
+                    "훌륭합니다! 오늘의 몰입이 내일의 통찰로 이어집니다.",
+                    "멋져요! 당신의 뇌가 최적화되고 있습니다.",
+                    "완벽해요! 이완된 집중 상태를 경험하셨군요.",
+                    "대단해요! 몰입의 깊이가 점점 더해지고 있습니다."
+                ]
+                st.info(random.choice(completion_messages))
                 
                 # 기록 저장
                 st.session_state.session_history.append({
@@ -595,13 +759,8 @@ else:
             
             df = pd.DataFrame(week_data)
             
-            # 차트 생성
-            fig = px.bar(df, x='날짜', y='세션', 
-                        title='최근 7일 몰입 현황',
-                        color='세션',
-                        color_continuous_scale='Blues')
-            fig.update_layout(showlegend=False)
-            st.plotly_chart(fig, use_container_width=True)
+            # Streamlit 기본 막대 차트 사용
+            st.bar_chart(df.set_index('날짜')['세션'], color='#667eea')
         else:
             st.info("아직 기록이 없습니다. 첫 몰입을 시작해보세요!")
     
@@ -611,16 +770,42 @@ else:
         # 21일 챌린지
         display_21_day_challenge()
         
-        # 몰입 팁
+        # 몰입 팁 (도파민 예측 불가능성을 위한 확장)
         st.markdown("### 💡 오늘의 몰입 팁")
-        tips = [
-            "타이머가 시작되면 절대 다른 일을 하지 마세요",
-            "스마트폰은 시야에서 완전히 치워두세요",
-            "한 가지 주제에만 집중하세요",
-            "완벽하지 않아도 괜찮습니다. 시작이 중요해요",
-            "몰입 후 1분간 휴식으로 다음 몰입을 준비하세요"
-        ]
-        st.info(random.choice(tips))
+        
+        # 황농문 교수님 이론 기반 팁
+        tips_categories = {
+            "슬로싱킹": [
+                "천천히 오래 생각하세요. 서두르지 마세요.",
+                "이완된 집중이 진정한 몰입입니다.",
+                "의자에 편안히 기대고 생각의 흐름을 따라가세요."
+            ],
+            "실천법": [
+                "타이머가 시작되면 절대 다른 일을 하지 마세요",
+                "스마트폰은 시야에서 완전히 치워두세요",
+                "한 가지 주제에만 집중하세요"
+            ],
+            "마인드셋": [
+                "완벽하지 않아도 괜찮습니다. 시작이 중요해요",
+                "몰입 후 1분간 휴식으로 다음 몰입을 준비하세요",
+                "실패는 성장의 기회입니다. 내일 다시 도전하세요"
+            ],
+            "16시간 이론": [
+                "5분 몰입이 16시간 이미지 트레이닝으로 이어집니다",
+                "잠재의식이 당신을 위해 계속 일하고 있습니다",
+                "Think Hard가 Work Hard보다 중요합니다"
+            ]
+        }
+        
+        # 랜덤 카테고리와 팁 선택
+        category = random.choice(list(tips_categories.keys()))
+        tip = random.choice(tips_categories[category])
+        
+        # 특별 이벤트 (3% 확률로 황농문 교수님 직접 인용)
+        if random.random() < 0.03:
+            st.success(f"🎓 [황농문 교수님 특별 메시지]\n\"{tip}\"")
+        else:
+            st.info(f"💡 [{category}] {tip}")
         
         # 황농문 교수 명언
         st.markdown("### 📖 황농문 교수님의 가르침")
@@ -652,30 +837,18 @@ else:
                 st.markdown("#### 📈 성장 곡선")
                 
                 # 누적 세션 데이터
-                dates = []
-                cumulative = []
+                growth_data = []
                 for i, session in enumerate(st.session_state.session_history):
-                    dates.append(datetime.fromisoformat(session['date']))
-                    cumulative.append(i + 1)
+                    date = datetime.fromisoformat(session['date'])
+                    growth_data.append({
+                        '날짜': date.strftime('%m/%d %H:%M'),
+                        '누적 세션': i + 1
+                    })
                 
-                fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    x=dates,
-                    y=cumulative,
-                    mode='lines+markers',
-                    name='누적 세션',
-                    line=dict(color='#667eea', width=3),
-                    marker=dict(size=8)
-                ))
+                df_growth = pd.DataFrame(growth_data)
                 
-                fig.update_layout(
-                    title='몰입 성장 곡선',
-                    xaxis_title='날짜',
-                    yaxis_title='누적 세션',
-                    showlegend=False
-                )
-                
-                st.plotly_chart(fig, use_container_width=True)
+                # Streamlit 기본 라인 차트 사용
+                st.line_chart(df_growth.set_index('날짜')['누적 세션'], color='#667eea')
         
         # 다음 목표
         st.markdown("### 🎯 다음 목표")
