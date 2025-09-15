@@ -311,75 +311,79 @@ else:
     if st.session_state.selected_tab == "⚡ 시작하기":
         # 타이머 활성화 상태
         if st.session_state.timer_active:
-            # 타이머 표시 (자동 업데이트)
-            timer_placeholder = st.empty()
-            
+            # 타이머 표시
             if st.session_state.end_time:
-                while True:
-                    now = datetime.now()
-                    if now < st.session_state.end_time:
-                        remaining = (st.session_state.end_time - now).total_seconds()
-                        mins = int(remaining // 60)
-                        secs = int(remaining % 60)
-                        
-                        timer_placeholder.markdown(f"""
-                        <div class="immersion-card">
-                            <h2 style="color:white;">🎯 {st.session_state.current_topic}</h2>
-                            <div class="timer-display">{mins:02d}:{secs:02d}</div>
-                            <p style="color:white; opacity:0.9;">집중하세요! 5분은 금방입니다</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # 중단 버튼
-                        col1, col2, col3 = st.columns([1,2,1])
-                        with col2:
-                            if st.button("⏹️ 중단하기", use_container_width=True, type="secondary", key="stop_timer"):
-                                st.session_state.timer_active = False
-                                st.rerun()
-                        
-                        # 1초 대기
-                        time.sleep(1)
-                    else:
-                        # 타이머 완료
-                        timer_placeholder.empty()
-                        st.balloons()
-                        st.success("🎉 5분 몰입 완료! 훌륭합니다!")
-                        
-                        # 세션 기록 추가
-                        st.session_state.session_history.append({
-                            'date': datetime.now().isoformat(),
-                            'topic': st.session_state.current_topic,
-                            'category': st.session_state.current_category
-                        })
-                        
-                        st.session_state.total_sessions += 1
-                        st.session_state.today_sessions += 1
-                        st.session_state.total_minutes += 5
-                        st.session_state.timer_active = False
-                        
-                        # 연속일수 업데이트
-                        today = datetime.now().date()
-                        if st.session_state.last_session_date:
-                            last_date = datetime.fromisoformat(st.session_state.last_session_date).date()
-                            if (today - last_date).days == 1:
-                                st.session_state.streak_days += 1
-                            elif today != last_date:
-                                st.session_state.streak_days = 1
-                        else:
-                            st.session_state.streak_days = 1
-                        
-                        st.session_state.last_session_date = datetime.now().isoformat()
-                        
-                        # 몰입 후 피드백
-                        st.info("💡 몰입 후 1분간 휴식하고 느낀점을 기록해보세요")
-                        
-                        # 느낀점 기록
-                        feedback = st.text_area("오늘의 몰입은 어떠셨나요?", key="feedback_input")
-                        
-                        if st.button("다시 시작", use_container_width=True, type="primary", key="restart"):
+                now = datetime.now()
+                if now < st.session_state.end_time:
+                    remaining = (st.session_state.end_time - now).total_seconds()
+                    mins = int(remaining // 60)
+                    secs = int(remaining % 60)
+                    
+                    st.markdown(f"""
+                    <div class="immersion-card">
+                        <h2 style="color:white;">🎯 {st.session_state.current_topic}</h2>
+                        <div class="timer-display">{mins:02d}:{secs:02d}</div>
+                        <p style="color:white; opacity:0.9;">집중하세요! 5분은 금방입니다</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    col1, col2, col3 = st.columns([1,2,1])
+                    with col2:
+                        # 수동 업데이트 버튼
+                        if st.button("🔄 타이머 업데이트", use_container_width=True):
                             st.rerun()
                         
-                        break
+                        if st.button("⏹️ 중단하기", use_container_width=True, type="secondary"):
+                            st.session_state.timer_active = False
+                            st.rerun()
+                    
+                    # 10초마다 자동 새로고침 (선택사항)
+                    st.markdown("""
+                    <script>
+                    setTimeout(function(){
+                        window.location.reload();
+                    }, 10000);
+                    </script>
+                    """, unsafe_allow_html=True)
+                    
+                else:
+                    # 타이머 완료
+                    st.balloons()
+                    st.success("🎉 5분 몰입 완료! 훌륭합니다!")
+                    
+                    # 세션 기록 추가
+                    st.session_state.session_history.append({
+                        'date': datetime.now().isoformat(),
+                        'topic': st.session_state.current_topic,
+                        'category': st.session_state.current_category
+                    })
+                    
+                    st.session_state.total_sessions += 1
+                    st.session_state.today_sessions += 1
+                    st.session_state.total_minutes += 5
+                    st.session_state.timer_active = False
+                    
+                    # 연속일수 업데이트
+                    today = datetime.now().date()
+                    if st.session_state.last_session_date:
+                        last_date = datetime.fromisoformat(st.session_state.last_session_date).date()
+                        if (today - last_date).days == 1:
+                            st.session_state.streak_days += 1
+                        elif today != last_date:
+                            st.session_state.streak_days = 1
+                    else:
+                        st.session_state.streak_days = 1
+                    
+                    st.session_state.last_session_date = datetime.now().isoformat()
+                    
+                    # 몰입 후 피드백
+                    st.info("💡 몰입 후 1분간 휴식하고 느낀점을 기록해보세요")
+                    
+                    # 느낀점 기록
+                    feedback = st.text_area("오늘의 몰입은 어떠셨나요?")
+                    
+                    if st.button("다시 시작", use_container_width=True, type="primary"):
+                        st.rerun()
         
         else:
             # 빠른 시작
