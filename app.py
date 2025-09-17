@@ -1,5 +1,5 @@
-# app.py - 직장인 몰입 체험 프로그램 v4.1 (개선판)
-# 황농문 교수님 몰입 이론 기반
+# app.py - 직장인 몰입 체험 프로그램 v4.2 (안정화판)
+# 황농문 교수님 몰입 이론 기반 - 1초 원칙 중심
 # 개발자: 갯버들
 # GitHub: sjks007-art/immersion-program
 
@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 import random
 import base64
+import pytz  # 시간대 처리
 
 # 페이지 설정
 st.set_page_config(
@@ -18,6 +19,9 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# 한국 시간대 설정
+KST = pytz.timezone('Asia/Seoul')
 
 # 자동 새로고침 비활성화
 if 'last_update' not in st.session_state:
@@ -59,7 +63,11 @@ def create_download_link(text, filename):
     b64 = base64.b64encode(text.encode()).decode()
     return f'<a href="data:text/plain;base64,{b64}" download="{filename}">📥 보고서 다운로드</a>'
 
-# CSS 스타일 (의식의 무대 시각화 강화)
+def get_korean_time():
+    """한국 시간 반환"""
+    return datetime.now(KST)
+
+# CSS 스타일 (단순화 및 안정화)
 st.markdown("""
 <style>
     /* 기본 요소 숨기기 */
@@ -69,145 +77,84 @@ st.markdown("""
     footer {visibility: hidden;}
     .block-container {padding-top: 2rem;}
     
-    /* 의식의 무대 - 극장 스타일 */
-    .theater-stage {
-        background: linear-gradient(to bottom, #1a1a2e 0%, #0f3460 50%, #16213e 100%);
+    /* 1초 원칙 의식의 무대 - 단순화 */
+    .focus-stage {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 20px;
         padding: 40px;
         margin: 20px auto;
-        position: relative;
-        min-height: 500px;
-        box-shadow: 
-            0 0 50px rgba(94, 84, 142, 0.5),
-            inset 0 0 100px rgba(0, 0, 0, 0.5);
-        overflow: hidden;
-    }
-    
-    /* 무대 커튼 효과 */
-    .stage-curtain {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 60px;
-        background: linear-gradient(90deg, 
-            #8B0000 0%, #CD5C5C 25%, 
-            #8B0000 50%, #CD5C5C 75%, 
-            #8B0000 100%);
-        border-bottom: 5px solid #4B0000;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-    }
-    
-    /* 스포트라이트 효과 */
-    .spotlight {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 300px;
-        height: 300px;
-        background: radial-gradient(
-            ellipse at center,
-            rgba(255, 250, 205, 0.8) 0%,
-            rgba(255, 250, 205, 0.4) 30%,
-            transparent 70%
-        );
-        animation: spotlight-pulse 4s ease-in-out infinite;
-        pointer-events: none;
-    }
-    
-    @keyframes spotlight-pulse {
-        0%, 100% { 
-            opacity: 0.7; 
-            transform: translate(-50%, -50%) scale(1);
-        }
-        50% { 
-            opacity: 1; 
-            transform: translate(-50%, -50%) scale(1.1);
-        }
-    }
-    
-    /* 무대 위 주제 텍스트 */
-    .stage-topic {
-        position: relative;
-        z-index: 10;
         text-align: center;
-        color: #FFD700;
-        font-size: 28px;
-        font-weight: bold;
-        text-shadow: 
-            0 0 20px rgba(255, 215, 0, 0.8),
-            0 0 40px rgba(255, 215, 0, 0.5);
-        animation: glow 2s ease-in-out infinite alternate;
-        margin: 100px 0 50px 0;
-    }
-    
-    @keyframes glow {
-        from { text-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
-        to { text-shadow: 0 0 30px rgba(255, 215, 0, 1), 0 0 40px rgba(255, 215, 0, 0.8); }
-    }
-    
-    /* 관객석 효과 */
-    .audience-seats {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 120px;
-        background: linear-gradient(to top, #000000, transparent);
+        min-height: 400px;
         display: flex;
-        align-items: flex-end;
-        justify-content: center;
-        padding-bottom: 20px;
-    }
-    
-    .seat {
-        width: 20px;
-        height: 25px;
-        margin: 2px;
-        background: #2c2c2c;
-        border-radius: 5px 5px 0 0;
-        opacity: 0.6;
-    }
-    
-    /* 호흡 가이드 - 실제 애니메이션 */
-    .breathing-container {
-        display: flex;
+        flex-direction: column;
         justify-content: center;
         align-items: center;
-        height: 250px;
-        position: relative;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3);
     }
     
-    .breathing-circle {
-        width: 150px;
-        height: 150px;
+    /* 주제 텍스트 - 1초 원칙 강조 */
+    .focus-topic {
+        font-size: 32px;
+        font-weight: bold;
+        color: #FFFFFF;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        line-height: 1.5;
+        padding: 20px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        max-width: 800px;
+    }
+    
+    /* 1초 원칙 알림 */
+    .one-second-rule {
+        color: #FFD700;
+        font-size: 18px;
+        margin-top: 20px;
+        padding: 15px;
+        background: rgba(0,0,0,0.2);
+        border-radius: 10px;
+        animation: gentle-pulse 3s ease-in-out infinite;
+    }
+    
+    @keyframes gentle-pulse {
+        0%, 100% { opacity: 0.8; }
+        50% { opacity: 1; }
+    }
+    
+    /* 타이머 디스플레이 */
+    .timer-display {
+        font-size: 64px;
+        font-weight: bold;
+        color: #FFD700;
+        text-align: center;
+        font-family: 'Courier New', monospace;
+        margin: 20px 0;
+    }
+    
+    /* 호흡 가이드 */
+    .breathing-guide {
+        width: 200px;
+        height: 200px;
         border: 4px solid #4CAF50;
         border-radius: 50%;
+        margin: 20px auto;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 20px;
-        color: #4CAF50;
+        font-size: 24px;
         font-weight: bold;
+        color: #4CAF50;
     }
     
-    .breathing-circle.inhale {
-        animation: breathe-in 4s ease-in-out;
+    .breathing-guide.active {
+        animation: breathe 12s ease-in-out infinite;
     }
     
-    .breathing-circle.exhale {
-        animation: breathe-out 8s ease-in-out;
-    }
-    
-    @keyframes breathe-in {
-        0% { transform: scale(1); background-color: rgba(76, 175, 80, 0.1); }
-        100% { transform: scale(1.3); background-color: rgba(76, 175, 80, 0.3); }
-    }
-    
-    @keyframes breathe-out {
-        0% { transform: scale(1.3); background-color: rgba(76, 175, 80, 0.3); }
-        100% { transform: scale(1); background-color: rgba(76, 175, 80, 0.1); }
+    @keyframes breathe {
+        0%, 100% { transform: scale(1); opacity: 0.7; }
+        33% { transform: scale(1.2); opacity: 1; }
+        66% { transform: scale(0.9); opacity: 0.9; }
     }
     
     /* 버튼 스타일 */
@@ -226,6 +173,16 @@ st.markdown("""
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
     }
     
+    /* 메모 카드 */
+    .memo-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-left: 4px solid #667eea;
+        padding: 10px 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
     /* 레벨 배지 */
     .level-badge {
         display: inline-block;
@@ -238,26 +195,6 @@ st.markdown("""
     .level-beginner { background: linear-gradient(135deg, #4CAF50, #8BC34A); color: white; }
     .level-intermediate { background: linear-gradient(135deg, #FF9800, #FFB74D); color: white; }
     .level-advanced { background: linear-gradient(135deg, #9C27B0, #BA68C8); color: white; }
-    
-    /* 타이머 디스플레이 */
-    .timer-display {
-        font-size: 48px;
-        font-weight: bold;
-        color: #FFD700;
-        text-align: center;
-        text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-        font-family: 'Courier New', monospace;
-    }
-    
-    /* 메모 카드 스타일 */
-    .memo-card {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
-        padding: 15px;
-        margin: 10px 0;
-        backdrop-filter: blur(10px);
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -388,20 +325,23 @@ if st.session_state.page == "home":
     
     st.markdown("""
     ### 📖 프로그램 소개
-    이 프로그램은 황농문 교수님의 **'슬로싱킹'** 철학을 바탕으로 
+    이 프로그램은 황농문 교수님의 **'1초 원칙'**과 **'슬로싱킹'** 철학을 바탕으로 
     직장인들이 일상에서 몰입을 실천할 수 있도록 돕습니다.
     
-    #### 핵심 기능:
-    1. **🎭 의식의 무대** - 극장형 시각화로 몰입 극대화
-    2. **🧘 4-8 호흡법** - 이완된 집중 상태 유도
-    3. **📝 잡념/통찰 분리** - 생각 정리와 아이디어 기록
-    4. **⏰ 다양한 시간 설정** - 5분부터 60분까지
-    5. **📊 보고서 다운로드** - 몰입 세션 기록 저장
+    #### 핵심 원칙:
     
-    #### 몰입의 3단계:
-    1. **준비** - 몸과 마음의 준비
-    2. **이완** - 의식적 이완을 통한 최적화
-    3. **슬로싱킹** - 천천히 오래 생각하기
+    ### 🎯 1초 원칙
+    > "의식의 조명을 단 1초도 다른 곳에 비추지 마세요"
+    
+    선택한 주제에 온전히 집중하여, 의식이 흐트러질 때마다
+    다시 주제로 돌아오는 연습을 합니다.
+    
+    #### 프로그램 특징:
+    1. **🧘 4-8 호흡법** - 이완된 집중 상태 유도
+    2. **💡 집중 주제 제시** - 레벨별 맞춤 주제
+    3. **📝 잡념/통찰 분리** - 생각 정리 시스템
+    4. **⏰ 다양한 시간 설정** - 5분부터 60분까지
+    5. **📊 보고서 다운로드** - 몰입 기록 저장
     
     > **"몰입은 긴장이 아니라 이완입니다"** - 황농문
     """)
@@ -452,7 +392,7 @@ elif st.session_state.page == "immersion":
                 st.session_state.breathing_count = 0
                 st.rerun()
         
-        # Step 2: 이완 단계 (4-8 호흡) - 버그 수정
+        # Step 2: 이완 단계 (4-8 호흡)
         elif st.session_state.immersion_step == 2:
             st.markdown("## 🧘 2단계: 의식적 이완")
             st.info("이완된 집중이 진정한 몰입입니다")
@@ -461,63 +401,58 @@ elif st.session_state.page == "immersion":
             ### 4-8 호흡법
             1. 4초간 천천히 숨을 들이마십니다
             2. 8초간 천천히 숨을 내쉽니다
-            3. 3-5회 반복합니다
+            3. 3회 반복합니다
             """)
             
-            # 호흡 가이드 비주얼
-            breathing_placeholder = st.empty()
-            breathing_placeholder.markdown(
-                '<div class="breathing-container">'
-                '<div class="breathing-circle">준비</div>'
-                '</div>', 
-                unsafe_allow_html=True
-            )
+            # 호흡 가이드
+            breathing_container = st.empty()
             
             col1, col2, col3 = st.columns(3)
             with col1:
                 if st.button("🧘 호흡 시작", type="primary"):
-                    # 호흡 카운터 증가
-                    st.session_state.breathing_count += 1
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
                     
-                    # 3회 호흡 진행
-                    for i in range(3):
-                        # 들숨
-                        breathing_placeholder.markdown(
-                            f'<div class="breathing-container">'
-                            f'<div class="breathing-circle inhale">들숨 {i+1}/3</div>'
-                            f'</div>', 
-                            unsafe_allow_html=True
-                        )
-                        time.sleep(4)
+                    for cycle in range(3):
+                        # 들숨 (4초)
+                        for i in range(40):
+                            breathing_container.markdown(
+                                f'<div class="breathing-guide active">'
+                                f'들숨 {cycle+1}/3<br>({i//10 + 1}/4초)'
+                                f'</div>', 
+                                unsafe_allow_html=True
+                            )
+                            progress_bar.progress((cycle * 120 + i) / 360)
+                            time.sleep(0.1)
                         
-                        # 날숨
-                        breathing_placeholder.markdown(
-                            f'<div class="breathing-container">'
-                            f'<div class="breathing-circle exhale">날숨 {i+1}/3</div>'
-                            f'</div>', 
-                            unsafe_allow_html=True
-                        )
-                        time.sleep(8)
+                        # 날숨 (8초)
+                        for i in range(80):
+                            breathing_container.markdown(
+                                f'<div class="breathing-guide active">'
+                                f'날숨 {cycle+1}/3<br>({i//10 + 1}/8초)'
+                                f'</div>', 
+                                unsafe_allow_html=True
+                            )
+                            progress_bar.progress((cycle * 120 + 40 + i) / 360)
+                            time.sleep(0.1)
                     
-                    # 호흡 완료 상태 설정
                     st.session_state.breathing_done = True
-                    breathing_placeholder.markdown(
-                        '<div class="breathing-container">'
-                        '<div class="breathing-circle" style="border-color: #4CAF50;">✅ 호흡 완료!</div>'
-                        '</div>', 
+                    st.session_state.breathing_count += 1
+                    breathing_container.markdown(
+                        '<div class="breathing-guide">✅ 호흡 완료!</div>', 
                         unsafe_allow_html=True
                     )
                     st.success("호흡이 완료되었습니다! 이제 몰입을 시작할 수 있습니다.")
             
             with col2:
-                st.markdown(f"호흡 횟수: {st.session_state.breathing_count}회")
+                st.info(f"호흡 횟수: {st.session_state.breathing_count}회")
             
             with col3:
                 if st.button("건너뛰기 →"):
                     st.session_state.immersion_step = 3
                     st.rerun()
             
-            # 호흡 완료 후에만 다음 단계 버튼 표시
+            # 호흡 완료 후 다음 단계
             if st.session_state.breathing_done:
                 st.markdown("---")
                 if st.button("🎯 몰입 시작하기 →", type="primary", use_container_width=True):
@@ -526,7 +461,7 @@ elif st.session_state.page == "immersion":
         
         # Step 3: 몰입 준비
         elif st.session_state.immersion_step == 3:
-            st.markdown("## 🎭 3단계: 몰입 준비")
+            st.markdown("## 🎯 3단계: 몰입 준비")
             
             # 주제 선택
             col1, col2 = st.columns([3, 1])
@@ -563,7 +498,7 @@ elif st.session_state.page == "immersion":
             st.session_state.selected_time = time_options[selected]
             
             # 몰입 시작
-            if st.button("🎯 의식의 무대로 입장", type="primary", use_container_width=True):
+            if st.button("🎯 몰입 시작 (1초 원칙)", type="primary", use_container_width=True):
                 if st.session_state.current_topic:
                     st.session_state.immersion_active = True
                     st.session_state.start_time = time.time()
@@ -572,90 +507,76 @@ elif st.session_state.page == "immersion":
                 else:
                     st.error("주제를 입력해주세요!")
         
-        # Step 4: 의식의 무대 (시각화 강화)
+        # Step 4: 1초 원칙 몰입 (단순화)
         elif st.session_state.immersion_step == 4:
-            # 극장형 무대 컨테이너
+            # 1초 원칙 의식의 무대
             st.markdown(
-                '<div class="theater-stage">'
-                '<div class="stage-curtain"></div>'
-                '<div class="spotlight"></div>',
+                '<div class="focus-stage">'
+                f'<div class="focus-topic">{st.session_state.current_topic}</div>'
+                '<div class="one-second-rule">💡 1초 원칙: 이 질문에만 의식의 조명을 비추세요</div>'
+                '</div>',
                 unsafe_allow_html=True
             )
             
-            st.markdown(f'<div class="stage-topic">🎭 {st.session_state.current_topic}</div>', unsafe_allow_html=True)
-            
-            # 타이머 섹션
-            timer_container = st.container()
-            with timer_container:
+            # 타이머
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
                 elapsed = time.time() - st.session_state.start_time if st.session_state.start_time else 0
                 remaining = max(0, st.session_state.selected_time * 60 - elapsed)
                 
-                col1, col2, col3 = st.columns([1, 2, 1])
-                with col2:
-                    st.markdown(f'<div class="timer-display">{format_time(remaining)}</div>', unsafe_allow_html=True)
-                    
-                    # 진행률 표시
-                    progress = min(1.0, elapsed / (st.session_state.selected_time * 60))
-                    st.progress(progress, text=f"진행률: {int(progress * 100)}%")
-                    
-                    # 타이머 업데이트 버튼
-                    if st.button("⏱️ 타이머 업데이트", use_container_width=True):
-                        st.rerun()
-            
-            # 관객석 효과
-            st.markdown(
-                '<div class="audience-seats">' +
-                ''.join(['<div class="seat"></div>' for _ in range(30)]) +
-                '</div></div>',
-                unsafe_allow_html=True
-            )
+                # 큰 타이머 표시
+                st.markdown(f'<div class="timer-display">{format_time(remaining)}</div>', unsafe_allow_html=True)
+                
+                # 진행률
+                progress = min(1.0, elapsed / (st.session_state.selected_time * 60))
+                st.progress(progress, text=f"진행률: {int(progress * 100)}%")
+                
+                # 타이머 업데이트
+                if st.button("⏱️ 타이머 업데이트", use_container_width=True):
+                    st.rerun()
             
             st.markdown("---")
             
-            # 메모 영역 (카드 스타일)
+            # 메모 영역
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown("### 🌊 잡념 (관객석으로)")
-                with st.container():
-                    thought = st.text_area(
-                        "떠오르는 잡념을 적고 놓아주세요",
-                        height=150,
-                        placeholder="예: 오늘 회의 준비, 저녁 약속...",
-                        key="thought_input"
-                    )
-                    if st.button("💭 관객석으로 보내기", use_container_width=True):
-                        if thought and thought not in st.session_state.thoughts:
-                            st.session_state.thoughts.append(thought)
-                            st.success("잡념을 관객석으로 보냈습니다")
-                            st.rerun()
-                    
-                    # 저장된 잡념 표시
-                    if st.session_state.thoughts:
-                        st.markdown("**보낸 잡념들:**")
-                        for i, t in enumerate(st.session_state.thoughts, 1):
-                            st.markdown(f'<div class="memo-card">💭 {t}</div>', unsafe_allow_html=True)
+                st.markdown("### 🌊 잡념 (놓아주기)")
+                thought = st.text_area(
+                    "떠오르는 잡념을 적고 놓아주세요",
+                    height=150,
+                    placeholder="예: 오늘 회의 준비, 저녁 약속...",
+                    key="thought_input"
+                )
+                if st.button("💭 잡념 기록", use_container_width=True):
+                    if thought and thought not in st.session_state.thoughts:
+                        st.session_state.thoughts.append(thought)
+                        st.success("잡념을 기록했습니다. 다시 주제로!")
+                        st.rerun()
+                
+                # 잡념 목록
+                if st.session_state.thoughts:
+                    for i, t in enumerate(st.session_state.thoughts, 1):
+                        st.markdown(f'<div class="memo-card">💭 {t}</div>', unsafe_allow_html=True)
             
             with col2:
-                st.markdown("### 💡 통찰 (무대 위로)")
-                with st.container():
-                    insight = st.text_area(
-                        "떠오른 통찰을 기록하세요",
-                        height=150,
-                        placeholder="예: 이 문제의 핵심은...",
-                        key="insight_input"
-                    )
-                    if st.button("✨ 무대로 올리기", use_container_width=True):
-                        if insight and insight not in st.session_state.insights:
-                            st.session_state.insights.append(insight)
-                            st.success("통찰을 무대에 올렸습니다")
-                            st.rerun()
-                    
-                    # 저장된 통찰 표시
-                    if st.session_state.insights:
-                        st.markdown("**무대 위 통찰들:**")
-                        for i, ins in enumerate(st.session_state.insights, 1):
-                            st.markdown(f'<div class="memo-card">💡 {ins}</div>', unsafe_allow_html=True)
+                st.markdown("### 💡 통찰 (떠오른 생각)")
+                insight = st.text_area(
+                    "떠오른 통찰을 기록하세요",
+                    height=150,
+                    placeholder="예: 이 문제의 핵심은...",
+                    key="insight_input"
+                )
+                if st.button("✨ 통찰 기록", use_container_width=True):
+                    if insight and insight not in st.session_state.insights:
+                        st.session_state.insights.append(insight)
+                        st.success("통찰을 기록했습니다!")
+                        st.rerun()
+                
+                # 통찰 목록
+                if st.session_state.insights:
+                    for i, ins in enumerate(st.session_state.insights, 1):
+                        st.markdown(f'<div class="memo-card">💡 {ins}</div>', unsafe_allow_html=True)
             
             # 몰입 종료
             st.markdown("---")
@@ -666,11 +587,12 @@ elif st.session_state.page == "immersion":
         # Step 5: 완료 및 보고서
         elif st.session_state.immersion_step == 5:
             duration = time.time() - st.session_state.start_time if st.session_state.start_time else 0
+            korean_time = get_korean_time()
             
             # 세션 저장
             session_data = {
                 "user": st.session_state.user_name,
-                "date": datetime.now().isoformat(),
+                "date": korean_time.isoformat(),
                 "topic": st.session_state.current_topic,
                 "duration": duration,
                 "thoughts": st.session_state.thoughts,
@@ -688,44 +610,58 @@ elif st.session_state.page == "immersion":
             report_text = f"""
 몰입 보고서
 ==========
-날짜: {datetime.now().strftime('%Y-%m-%d %H:%M')}
+날짜: {korean_time.strftime('%Y-%m-%d %H:%M')} (한국시간)
 사용자: {st.session_state.user_name}
 레벨: {level}
 주제: {st.session_state.current_topic}
 몰입 시간: {format_time(duration)}
 
 잡념 기록 ({len(st.session_state.thoughts)}개):
-{chr(10).join([f'- {t}' for t in st.session_state.thoughts])}
+{chr(10).join([f'- {t}' for t in st.session_state.thoughts]) if st.session_state.thoughts else '- 없음'}
 
 통찰 기록 ({len(st.session_state.insights)}개):
-{chr(10).join([f'- {i}' for i in st.session_state.insights])}
+{chr(10).join([f'- {i}' for i in st.session_state.insights]) if st.session_state.insights else '- 없음'}
 
-16시간 법칙: 오늘 몰입한 내용이 잠재의식에서 계속 처리됩니다.
-            """
+[1초 원칙 실천]
+의식의 조명을 주제에 집중하는 연습을 완료했습니다.
+
+[16시간 법칙]
+오늘 몰입한 내용이 잠재의식에서 계속 처리됩니다.
+"""
             
             col1, col2 = st.columns(2)
             
             with col1:
-                st.markdown(f"**날짜:** {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-                st.markdown(f"**주제:** {st.session_state.current_topic}")
-                st.markdown(f"**몰입 시간:** {format_time(duration)}")
-                st.markdown(f"**잡념 개수:** {len(st.session_state.thoughts)}개")
-                st.markdown(f"**통찰 개수:** {len(st.session_state.insights)}개")
+                st.markdown(f"**📅 날짜:** {korean_time.strftime('%Y-%m-%d %H:%M')} KST")
+                st.markdown(f"**💭 주제:** {st.session_state.current_topic}")
+                st.markdown(f"**⏱️ 몰입 시간:** {format_time(duration)}")
+                st.markdown(f"**🌊 잡념:** {len(st.session_state.thoughts)}개")
+                st.markdown(f"**💡 통찰:** {len(st.session_state.insights)}개")
             
             with col2:
                 # 다운로드 버튼
                 st.markdown("### 📥 보고서 저장")
-                filename = f"몰입보고서_{datetime.now().strftime('%Y%m%d_%H%M')}.txt"
+                filename = f"몰입보고서_{korean_time.strftime('%Y%m%d_%H%M')}.txt"
                 st.markdown(create_download_link(report_text, filename), unsafe_allow_html=True)
                 
-                # 클립보드 복사 (대체 방법)
-                st.text_area("📋 보고서 내용 (전체 선택 후 Ctrl+C로 복사)", report_text, height=200)
+                # 복사용 텍스트
+                st.text_area("📋 보고서 내용 (Ctrl+C로 복사)", report_text, height=200)
             
             # 통찰 요약
             if st.session_state.insights:
                 st.markdown("### 💡 오늘의 주요 통찰")
                 for i, insight in enumerate(st.session_state.insights, 1):
                     st.info(f"{i}. {insight}")
+            
+            # 1초 원칙 평가
+            st.markdown("### 🎯 1초 원칙 실천 평가")
+            st.markdown(f"""
+            - **집중 유지 시간:** {format_time(duration)}
+            - **잡념 처리:** {len(st.session_state.thoughts)}번 놓아줌
+            - **통찰 발견:** {len(st.session_state.insights)}개 기록
+            
+            > 의식의 조명을 {format_time(duration)} 동안 유지했습니다!
+            """)
             
             # 16시간 법칙 알림
             if duration >= 300:  # 5분 이상
@@ -766,7 +702,8 @@ elif st.session_state.page == "stats":
             # 최근 세션
             st.markdown("### 📝 최근 몰입 기록")
             for session in user_sessions[-5:]:
-                with st.expander(f"{session['date'][:10]} - {session.get('topic', '제목 없음')}"):
+                session_date = session['date'][:16]  # 날짜 시간까지만
+                with st.expander(f"{session_date} - {session.get('topic', '제목 없음')[:30]}..."):
                     st.write(f"몰입 시간: {format_time(session.get('duration', 0))}")
                     st.write(f"잡념: {len(session.get('thoughts', []))}개")
                     st.write(f"통찰: {len(session.get('insights', []))}개")
@@ -782,12 +719,14 @@ elif st.session_state.page == "report":
         user_sessions = [s for s in sessions if s.get('user') == st.session_state.user_name]
         
         if user_sessions:
+            korean_time = get_korean_time()
             st.markdown(f"### {st.session_state.user_name}님의 몰입 여정")
             
             # 전체 보고서 생성
             full_report = f"""
 {st.session_state.user_name}님의 몰입 종합 보고서
 {'='*50}
+생성 시간: {korean_time.strftime('%Y-%m-%d %H:%M')} (한국시간)
 총 몰입 횟수: {len(user_sessions)}회
 총 몰입 시간: {format_time(sum(s.get('duration', 0) for s in user_sessions))}
 첫 몰입: {user_sessions[0]['date'][:10]}
@@ -804,10 +743,17 @@ elif st.session_state.page == "report":
             for i, insight in enumerate(all_insights, 1):
                 full_report += f"{i}. {insight}\n"
             
+            full_report += f"""
+{'-'*30}
+1초 원칙 실천 기록
+총 {len(user_sessions)}회의 몰입을 통해
+의식의 조명을 주제에 집중하는 훈련을 지속했습니다.
+"""
+            
             # 다운로드 버튼
             col1, col2 = st.columns(2)
             with col1:
-                filename = f"종합보고서_{st.session_state.user_name}_{datetime.now().strftime('%Y%m%d')}.txt"
+                filename = f"종합보고서_{st.session_state.user_name}_{korean_time.strftime('%Y%m%d_%H%M')}.txt"
                 st.markdown(create_download_link(full_report, filename), unsafe_allow_html=True)
             
             with col2:
@@ -815,12 +761,14 @@ elif st.session_state.page == "report":
             
             # 주요 통찰 표시
             if all_insights:
-                st.markdown("#### 💎 주요 통찰 TOP 10")
+                st.markdown("#### 💎 최근 통찰 TOP 10")
                 for i, insight in enumerate(all_insights[-10:], 1):
                     st.info(f"{i}. {insight}")
             
             # 성장 그래프
             st.markdown("#### 📈 성장 추이")
+            level, emoji, _ = get_user_level(len(user_sessions))
+            st.markdown(f"**현재 레벨:** {emoji} {level}")
             st.info(f"첫 몰입: {user_sessions[0]['date'][:10]}")
             st.info(f"최근 몰입: {user_sessions[-1]['date'][:10]}")
             st.success(f"총 {len(user_sessions)}회의 몰입으로 성장 중!")
@@ -837,7 +785,7 @@ st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: gray;'>"
     "© 2025 직장인 몰입 체험 프로그램 | "
-    "황농문 교수님의 몰입 철학 기반 | "
+    "황농문 교수님의 1초 원칙 기반 | "
     "개발: 갯버들 | "
     "문의: sjks007@gmail.com"
     "</div>", 
