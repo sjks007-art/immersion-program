@@ -128,20 +128,10 @@ def get_personalized_feedback(duration, thoughts_count, insights_count):
         feedback.append(f"[풍부한 통찰]\n{insights_count}개의 통찰이 떠올랐습니다. "
                        f"활발한 사고가 일어났네요.")
     
-    # 16시간 법칙 - 시간대별 메시지
-    current_hour = get_korean_time().hour
-    if current_hour < 12:
-        feedback.append("[16시간 법칙 - 오전]\n"
-                       "오늘 저녁까지 잠재의식이 계속 처리합니다. "
-                       "갑자기 답이 떠오를 수 있습니다.")
-    elif current_hour < 18:
-        feedback.append("[16시간 법칙 - 오후]\n"
-                       "내일 아침 새로운 관점이 생길 수 있습니다. "
-                       "잠들기 전 다시 한번 떠올려보세요.")
-    else:
-        feedback.append("[16시간 법칙 - 저녁]\n"
-                       "오늘 밤 꿈에서, 내일 아침 샤워 중에 "
-                       "갑자기 해답이 떠오를 수 있습니다.")
+    # 간단한 격려 메시지
+    feedback.append("[다음 단계]\n"
+                   "오늘의 몰입이 씨앗이 되어 "
+                   "내일 더 깊은 통찰로 이어질 것입니다.")
     
     return "\n\n".join(feedback)
 
@@ -438,17 +428,26 @@ elif st.session_state.page == "immersion":
             3. 3회 반복합니다
             """)
             
-            # 호흡 가이드 플레이스홀더
-            breathing_placeholder = st.empty()
-            breathing_placeholder.markdown(
-                '<div style="'
-                'width: 150px; height: 150px; '
-                'border: 4px solid #4CAF50; border-radius: 50%; '
-                'margin: 20px auto; display: flex; '
-                'align-items: center; justify-content: center; '
-                'font-size: 20px; color: #4CAF50;">준비</div>', 
-                unsafe_allow_html=True
-            )
+            # 호흡 가이드 플레이스홀더 - 고정 컨테이너
+            breathing_container = st.container()
+            with breathing_container:
+                # 고정 높이 영역 확보
+                breathing_placeholder = st.empty()
+                breathing_placeholder.markdown(
+                    '<div style="'
+                    'height: 250px; '  # 고정 높이
+                    'display: flex; '
+                    'align-items: center; '
+                    'justify-content: center;">'
+                    '<div style="'
+                    'width: 150px; height: 150px; '
+                    'border: 4px solid #4CAF50; border-radius: 50%; '
+                    'display: flex; '
+                    'align-items: center; justify-content: center; '
+                    'font-size: 20px; color: #4CAF50;">준비</div>'
+                    '</div>', 
+                    unsafe_allow_html=True
+                )
             
             # 버튼 배치
             button_col1, button_col2, button_col3 = st.columns(3)
@@ -465,11 +464,15 @@ elif st.session_state.page == "immersion":
                             
                             breathing_placeholder.markdown(
                                 f'''<div style="
+                                    height: 250px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;">
+                                    <div style="
                                     width: {150 * scale}px;
                                     height: {150 * scale}px;
                                     border: 4px solid rgba(76, 175, 80, {opacity});
                                     border-radius: 50%;
-                                    margin: 20px auto;
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
@@ -478,8 +481,9 @@ elif st.session_state.page == "immersion":
                                     background: rgba(76, 175, 80, {opacity * 0.1});
                                     transition: all 0.1s ease;
                                     font-weight: bold;
-                                ">
-                                들숨 {cycle+1}/3<br>{i//10 + 1}초
+                                    ">
+                                    들숨 {cycle+1}/3<br>{i//10 + 1}초
+                                    </div>
                                 </div>''', 
                                 unsafe_allow_html=True
                             )
@@ -493,11 +497,15 @@ elif st.session_state.page == "immersion":
                             
                             breathing_placeholder.markdown(
                                 f'''<div style="
+                                    height: 250px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;">
+                                    <div style="
                                     width: {150 * scale}px;
                                     height: {150 * scale}px;
                                     border: 4px solid rgba(76, 175, 80, {opacity});
                                     border-radius: 50%;
-                                    margin: 20px auto;
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
@@ -506,8 +514,9 @@ elif st.session_state.page == "immersion":
                                     background: rgba(76, 175, 80, {opacity * 0.05});
                                     transition: all 0.1s ease;
                                     font-weight: bold;
-                                ">
-                                날숨 {cycle+1}/3<br>{i//10 + 1}초
+                                    ">
+                                    날숨 {cycle+1}/3<br>{i//10 + 1}초
+                                    </div>
                                 </div>''', 
                                 unsafe_allow_html=True
                             )
@@ -518,12 +527,18 @@ elif st.session_state.page == "immersion":
                     st.session_state.breathing_count += 1
                     breathing_placeholder.markdown(
                         '<div style="'
+                        'height: 250px; '
+                        'display: flex; '
+                        'align-items: center; '
+                        'justify-content: center;">'
+                        '<div style="'
                         'width: 200px; height: 200px; '
                         'border: 4px solid #4CAF50; border-radius: 50%; '
-                        'margin: 20px auto; display: flex; '
+                        'display: flex; '
                         'align-items: center; justify-content: center; '
                         'font-size: 24px; color: #4CAF50; '
-                        'background: rgba(76, 175, 80, 0.1);">✅ 호흡 완료!</div>', 
+                        'background: rgba(76, 175, 80, 0.1);">✅ 호흡 완료!</div>'
+                        '</div>', 
                         unsafe_allow_html=True
                     )
                     st.success("호흡이 완료되었습니다! 이제 몰입을 시작할 수 있습니다.")
