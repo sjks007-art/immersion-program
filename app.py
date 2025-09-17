@@ -1,8 +1,8 @@
-# app.py - 직장인 몰입 체험 프로그램 v4.3 (최종 완성판)
+# app.py - 직장인 몰입 체험 프로그램 v5.0 (최종 완성판)
 # 황농문 교수님 몰입 이론 기반 - 1초 원칙 중심
 # 개발자: 갯버들 (한승희)
 # GitHub: sjks007-art/immersion-program
-# 2025년 9월 17일 완성
+# 최종 완성: 2025년 9월 17일
 
 import streamlit as st
 import time
@@ -73,6 +73,78 @@ def get_korean_time():
     else:
         return datetime.now() + timedelta(hours=9)  # UTC+9
 
+def format_time(seconds):
+    """시간을 MM:SS 형식으로 변환"""
+    mins = int(seconds // 60)
+    secs = int(seconds % 60)
+    return f"{mins:02d}:{secs:02d}"
+
+def get_user_level(session_count):
+    """사용자 레벨 결정"""
+    if session_count < 5:
+        return "초급", "🌱", 1
+    elif session_count < 20:
+        return "중급", "🌿", 2
+    else:
+        return "고급", "🌳", 3
+
+def get_personalized_feedback(duration, thoughts_count, insights_count):
+    """개인화된 피드백 생성"""
+    feedback = []
+    
+    # 1초 원칙 평가 - 개인화
+    if duration < 300:  # 5분 미만
+        feedback.append(f"[짧은 몰입도 의미있습니다]\n"
+                       f"{format_time(duration)} 동안 주제에 집중하셨네요. "
+                       f"처음 시작하기 좋은 시간입니다.")
+    elif duration < 900:  # 15분 미만
+        feedback.append(f"[집중력이 늘고 있습니다]\n"
+                       f"{format_time(duration)} 동안 1초 원칙을 실천했습니다. "
+                       f"일상에서 활용하기 좋은 몰입 시간입니다.")
+    elif duration < 1800:  # 30분 미만
+        feedback.append(f"[깊은 몰입 단계]\n"
+                       f"{format_time(duration)} 동안 의식의 조명을 유지했습니다. "
+                       f"프로 수준의 집중력입니다.")
+    else:  # 30분 이상
+        feedback.append(f"[몰입 마스터]\n"
+                       f"{format_time(duration)} 동안 완전한 몰입을 경험했습니다. "
+                       f"황농문 교수님의 '강한 몰입' 단계입니다.")
+    
+    # 잡념 처리 평가
+    if thoughts_count == 0:
+        feedback.append("[맑은 의식]\n잡념 없이 순수하게 집중했습니다.")
+    elif thoughts_count <= 3:
+        feedback.append(f"[잡념 관리 우수]\n{thoughts_count}개의 잡념을 잘 놓아주었습니다.")
+    else:
+        feedback.append(f"[적극적 정리]\n{thoughts_count}개의 잡념을 기록하고 놓아주었습니다. "
+                       f"의식을 비우는 좋은 연습입니다.")
+    
+    # 통찰 평가
+    if insights_count == 0:
+        feedback.append("[고요한 관찰]\n조용히 주제를 품고 있었습니다.")
+    elif insights_count <= 2:
+        feedback.append(f"[통찰 발견]\n{insights_count}개의 귀한 깨달음을 얻었습니다.")
+    else:
+        feedback.append(f"[풍부한 통찰]\n{insights_count}개의 통찰이 떠올랐습니다. "
+                       f"활발한 사고가 일어났네요.")
+    
+    # 16시간 법칙 - 시간대별 메시지
+    current_hour = get_korean_time().hour
+    if current_hour < 12:
+        feedback.append("[16시간 법칙 - 오전]\n"
+                       "오늘 저녁까지 잠재의식이 계속 처리합니다. "
+                       "갑자기 답이 떠오를 수 있습니다.")
+    elif current_hour < 18:
+        feedback.append("[16시간 법칙 - 오후]\n"
+                       "내일 아침 새로운 관점이 생길 수 있습니다. "
+                       "잠들기 전 다시 한번 떠올려보세요.")
+    else:
+        feedback.append("[16시간 법칙 - 저녁]\n"
+                       "오늘 밤 꿈에서, 내일 아침 샤워 중에 "
+                       "갑자기 해답이 떠오를 수 있습니다.")
+    
+    return "\n\n".join(feedback)
+
 # CSS 스타일
 st.markdown("""
 <style>
@@ -133,34 +205,6 @@ st.markdown("""
         text-align: center;
         font-family: 'Courier New', monospace;
         margin: 20px 0;
-    }
-    
-    /* 호흡 가이드 수정 */
-    .breathing-guide {
-        width: 200px;
-        height: 200px;
-        border: 4px solid #4CAF50;
-        border-radius: 50%;
-        margin: 20px auto;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 24px;
-        font-weight: bold;
-        color: #4CAF50;
-        transition: all 0.5s ease;
-    }
-    
-    .breathing-guide.inhale {
-        transform: scale(1.3);
-        background-color: rgba(76, 175, 80, 0.1);
-        border-color: #4CAF50;
-    }
-    
-    .breathing-guide.exhale {
-        transform: scale(0.9);
-        background-color: rgba(76, 175, 80, 0.05);
-        border-color: #81C784;
     }
     
     .stButton > button {
@@ -260,19 +304,6 @@ TOPICS = {
     ]
 }
 
-def get_user_level(session_count):
-    if session_count < 5:
-        return "초급", "🌱", 1
-    elif session_count < 20:
-        return "중급", "🌿", 2
-    else:
-        return "고급", "🌳", 3
-
-def format_time(seconds):
-    mins = int(seconds // 60)
-    secs = int(seconds % 60)
-    return f"{mins:02d}:{secs:02d}"
-
 # 데이터 로드
 user_data = load_user_data()
 sessions = load_sessions()
@@ -344,7 +375,7 @@ if st.session_state.page == "home":
     2. **💡 집중 주제 제시** - 레벨별 맞춤 주제
     3. **📝 잡념/통찰 분리** - 생각 정리 시스템
     4. **⏰ 다양한 시간 설정** - 5분부터 60분까지
-    5. **📊 보고서 다운로드** - 몰입 기록 저장
+    5. **📊 개인화된 피드백** - 몰입 패턴 분석
     
     > **"몰입은 긴장이 아니라 이완입니다"** - 황농문
     """)
@@ -395,7 +426,7 @@ elif st.session_state.page == "immersion":
                 st.session_state.breathing_count = 0
                 st.rerun()
         
-        # Step 2: 이완 단계 (4-8 호흡) - 415번 줄 버그 수정
+        # Step 2: 이완 단계 - 점진적 호흡 애니메이션
         elif st.session_state.immersion_step == 2:
             st.markdown("## 🧘 2단계: 의식적 이완")
             st.info("이완된 집중이 진정한 몰입입니다")
@@ -407,10 +438,15 @@ elif st.session_state.page == "immersion":
             3. 3회 반복합니다
             """)
             
-            # 호흡 가이드
-            breathing_container = st.empty()
-            breathing_container.markdown(
-                '<div class="breathing-guide">준비</div>', 
+            # 호흡 가이드 플레이스홀더
+            breathing_placeholder = st.empty()
+            breathing_placeholder.markdown(
+                '<div style="'
+                'width: 150px; height: 150px; '
+                'border: 4px solid #4CAF50; border-radius: 50%; '
+                'margin: 20px auto; display: flex; '
+                'align-items: center; justify-content: center; '
+                'font-size: 20px; color: #4CAF50;">준비</div>', 
                 unsafe_allow_html=True
             )
             
@@ -422,23 +458,57 @@ elif st.session_state.page == "immersion":
                     progress_bar = st.progress(0)
                     
                     for cycle in range(3):
-                        # 들숨 (4초) - 원이 커짐
+                        # 들숨 (4초) - 원이 점진적으로 커짐
                         for i in range(40):
-                            breathing_container.markdown(
-                                f'<div class="breathing-guide inhale">'
-                                f'들숨 {cycle+1}/3<br>({i//10 + 1}/4초)'
-                                f'</div>', 
+                            scale = 1 + (0.3 * (i / 40))  # 1.0 → 1.3
+                            opacity = 0.7 + (0.3 * (i / 40))  # 0.7 → 1.0
+                            
+                            breathing_placeholder.markdown(
+                                f'''<div style="
+                                    width: {150 * scale}px;
+                                    height: {150 * scale}px;
+                                    border: 4px solid rgba(76, 175, 80, {opacity});
+                                    border-radius: 50%;
+                                    margin: 20px auto;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: {20 + i/4}px;
+                                    color: rgba(76, 175, 80, {opacity});
+                                    background: rgba(76, 175, 80, {opacity * 0.1});
+                                    transition: all 0.1s ease;
+                                    font-weight: bold;
+                                ">
+                                들숨 {cycle+1}/3<br>{i//10 + 1}초
+                                </div>''', 
                                 unsafe_allow_html=True
                             )
                             progress_bar.progress((cycle * 120 + i) / 360)
                             time.sleep(0.1)
                         
-                        # 날숨 (8초) - 원이 작아짐
+                        # 날숨 (8초) - 원이 점진적으로 작아짐
                         for i in range(80):
-                            breathing_container.markdown(
-                                f'<div class="breathing-guide exhale">'
-                                f'날숨 {cycle+1}/3<br>({i//10 + 1}/8초)'
-                                f'</div>', 
+                            scale = 1.3 - (0.4 * (i / 80))  # 1.3 → 0.9
+                            opacity = 1 - (0.3 * (i / 80))  # 1.0 → 0.7
+                            
+                            breathing_placeholder.markdown(
+                                f'''<div style="
+                                    width: {150 * scale}px;
+                                    height: {150 * scale}px;
+                                    border: 4px solid rgba(76, 175, 80, {opacity});
+                                    border-radius: 50%;
+                                    margin: 20px auto;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: {24 - i/5}px;
+                                    color: rgba(76, 175, 80, {opacity});
+                                    background: rgba(76, 175, 80, {opacity * 0.05});
+                                    transition: all 0.1s ease;
+                                    font-weight: bold;
+                                ">
+                                날숨 {cycle+1}/3<br>{i//10 + 1}초
+                                </div>''', 
                                 unsafe_allow_html=True
                             )
                             progress_bar.progress((cycle * 120 + 40 + i) / 360)
@@ -446,8 +516,14 @@ elif st.session_state.page == "immersion":
                     
                     st.session_state.breathing_done = True
                     st.session_state.breathing_count += 1
-                    breathing_container.markdown(
-                        '<div class="breathing-guide">✅ 호흡 완료!</div>', 
+                    breathing_placeholder.markdown(
+                        '<div style="'
+                        'width: 200px; height: 200px; '
+                        'border: 4px solid #4CAF50; border-radius: 50%; '
+                        'margin: 20px auto; display: flex; '
+                        'align-items: center; justify-content: center; '
+                        'font-size: 24px; color: #4CAF50; '
+                        'background: rgba(76, 175, 80, 0.1);">✅ 호흡 완료!</div>', 
                         unsafe_allow_html=True
                     )
                     st.success("호흡이 완료되었습니다! 이제 몰입을 시작할 수 있습니다.")
@@ -592,7 +668,7 @@ elif st.session_state.page == "immersion":
                 st.session_state.immersion_step = 5
                 st.rerun()
         
-        # Step 5: 완료 및 보고서
+        # Step 5: 완료 및 개인화된 보고서
         elif st.session_state.immersion_step == 5:
             duration = time.time() - st.session_state.start_time if st.session_state.start_time else 0
             korean_time = get_korean_time()
@@ -612,6 +688,13 @@ elif st.session_state.page == "immersion":
             st.balloons()
             st.success("🎉 몰입 완료! 수고하셨습니다!")
             
+            # 개인화된 피드백 생성
+            personalized_feedback = get_personalized_feedback(
+                duration,
+                len(st.session_state.thoughts),
+                len(st.session_state.insights)
+            )
+            
             # 보고서
             st.markdown("## 📊 몰입 보고서")
             
@@ -630,11 +713,8 @@ elif st.session_state.page == "immersion":
 통찰 기록 ({len(st.session_state.insights)}개):
 {chr(10).join([f'- {i}' for i in st.session_state.insights]) if st.session_state.insights else '- 없음'}
 
-[1초 원칙 실천]
-의식의 조명을 주제에 집중하는 연습을 완료했습니다.
-
-[16시간 법칙]
-오늘 몰입한 내용이 잠재의식에서 계속 처리됩니다.
+--- 개인 맞춤 피드백 ---
+{personalized_feedback}
 """
             
             col1, col2 = st.columns(2)
@@ -655,26 +735,17 @@ elif st.session_state.page == "immersion":
                 # 복사용 텍스트
                 st.text_area("📋 보고서 내용 (전체 선택 후 Ctrl+C로 복사)", report_text, height=200)
             
+            # 개인화된 피드백 표시
+            st.markdown("### 🎯 개인 맞춤 피드백")
+            feedback_parts = personalized_feedback.split("\n\n")
+            for part in feedback_parts:
+                st.info(part)
+            
             # 통찰 요약
             if st.session_state.insights:
                 st.markdown("### 💡 오늘의 주요 통찰")
                 for i, insight in enumerate(st.session_state.insights, 1):
-                    st.info(f"{i}. {insight}")
-            
-            # 1초 원칙 평가
-            st.markdown("### 🎯 1초 원칙 실천 평가")
-            st.markdown(f"""
-            - **집중 유지 시간:** {format_time(duration)}
-            - **잡념 처리:** {len(st.session_state.thoughts)}번 놓아줌
-            - **통찰 발견:** {len(st.session_state.insights)}개 기록
-            
-            > 의식의 조명을 {format_time(duration)} 동안 유지했습니다!
-            """)
-            
-            # 16시간 법칙 알림
-            if duration >= 300:  # 5분 이상
-                st.markdown("### 🌟 16시간 법칙")
-                st.success("오늘 몰입한 내용이 잠재의식에서 계속 처리됩니다. 내일 아침 새로운 통찰이 떠오를 수 있습니다!")
+                    st.markdown(f"**{i}.** {insight}")
             
             # 초기화
             st.markdown("---")
@@ -698,14 +769,19 @@ elif st.session_state.page == "stats":
             total_sessions = len(user_sessions)
             total_time = sum(s.get('duration', 0) for s in user_sessions)
             avg_time = total_time / total_sessions if total_sessions > 0 else 0
+            total_thoughts = sum(len(s.get('thoughts', [])) for s in user_sessions)
+            total_insights = sum(len(s.get('insights', [])) for s in user_sessions)
             
-            col1, col2, col3 = st.columns(3)
+            # 통계 카드
+            col1, col2, col3, col4 = st.columns(4)
             with col1:
                 st.metric("총 몰입 횟수", f"{total_sessions}회")
             with col2:
                 st.metric("총 몰입 시간", format_time(total_time))
             with col3:
                 st.metric("평균 몰입 시간", format_time(avg_time))
+            with col4:
+                st.metric("통찰/잡념 비율", f"{total_insights}/{total_thoughts}")
             
             # 최근 세션
             st.markdown("### 📝 최근 몰입 기록")
@@ -715,6 +791,11 @@ elif st.session_state.page == "stats":
                     st.write(f"몰입 시간: {format_time(session.get('duration', 0))}")
                     st.write(f"잡념: {len(session.get('thoughts', []))}개")
                     st.write(f"통찰: {len(session.get('insights', []))}개")
+                    
+                    if session.get('insights'):
+                        st.markdown("**통찰:**")
+                        for ins in session['insights']:
+                            st.write(f"- {ins}")
         else:
             st.info("아직 몰입 기록이 없습니다. 첫 몰입을 시작해보세요!")
     else:
@@ -730,41 +811,60 @@ elif st.session_state.page == "report":
             korean_time = get_korean_time()
             st.markdown(f"### {st.session_state.user_name}님의 몰입 여정")
             
-            # 전체 보고서 생성
-            full_report = f"""
-{st.session_state.user_name}님의 몰입 종합 보고서
-{'='*50}
-생성 시간: {korean_time.strftime('%Y-%m-%d %H:%M')} (한국시간)
-총 몰입 횟수: {len(user_sessions)}회
-총 몰입 시간: {format_time(sum(s.get('duration', 0) for s in user_sessions))}
-첫 몰입: {user_sessions[0]['date'][:10]}
-최근 몰입: {user_sessions[-1]['date'][:10]}
-
-주요 통찰 모음:
-{'-'*30}
-"""
+            # 전체 통계
+            total_sessions = len(user_sessions)
+            total_time = sum(s.get('duration', 0) for s in user_sessions)
+            avg_time = total_time / total_sessions if total_sessions > 0 else 0
+            
             # 모든 통찰 수집
             all_insights = []
             for session in user_sessions:
                 all_insights.extend(session.get('insights', []))
             
+            # 전체 보고서 생성
+            full_report = f"""
+{st.session_state.user_name}님의 몰입 종합 보고서
+{'='*50}
+생성 시간: {korean_time.strftime('%Y-%m-%d %H:%M')} (한국시간)
+
+[몰입 통계]
+총 몰입 횟수: {total_sessions}회
+총 몰입 시간: {format_time(total_time)}
+평균 몰입 시간: {format_time(avg_time)}
+첫 몰입: {user_sessions[0]['date'][:10]}
+최근 몰입: {user_sessions[-1]['date'][:10]}
+
+[주요 통찰 모음] - 총 {len(all_insights)}개
+{'-'*30}
+"""
             for i, insight in enumerate(all_insights, 1):
                 full_report += f"{i}. {insight}\n"
             
             full_report += f"""
 {'-'*30}
-1초 원칙 실천 기록
-총 {len(user_sessions)}회의 몰입을 통해
+
+[성장 기록]
+- 초급 단계: {min(5, total_sessions)}회 완료
+- 중급 단계: {max(0, min(15, total_sessions - 5))}회 완료
+- 고급 단계: {max(0, total_sessions - 20)}회 완료
+
+[1초 원칙 실천]
+총 {total_sessions}회의 몰입을 통해
 의식의 조명을 주제에 집중하는 훈련을 지속했습니다.
+
+황농문 교수님의 가르침을 따라
+"몰입은 긴장이 아니라 이완"임을 체험했습니다.
 """
             
-            # 다운로드 버튼
+            # 다운로드 버튼과 통계
             col1, col2 = st.columns(2)
             with col1:
                 filename = f"종합보고서_{st.session_state.user_name}_{korean_time.strftime('%Y%m%d_%H%M')}.txt"
                 st.markdown(create_download_link(full_report, filename), unsafe_allow_html=True)
             
             with col2:
+                level, emoji, _ = get_user_level(total_sessions)
+                st.metric("현재 레벨", f"{emoji} {level}")
                 st.metric("총 통찰 개수", f"{len(all_insights)}개")
             
             # 주요 통찰 표시
@@ -775,11 +875,16 @@ elif st.session_state.page == "report":
             
             # 성장 그래프
             st.markdown("#### 📈 성장 추이")
-            level, emoji, _ = get_user_level(len(user_sessions))
-            st.markdown(f"**현재 레벨:** {emoji} {level}")
-            st.info(f"첫 몰입: {user_sessions[0]['date'][:10]}")
-            st.info(f"최근 몰입: {user_sessions[-1]['date'][:10]}")
-            st.success(f"총 {len(user_sessions)}회의 몰입으로 성장 중!")
+            growth_data = []
+            for i, session in enumerate(user_sessions):
+                level_at_time, _, _ = get_user_level(i + 1)
+                growth_data.append(f"세션 {i+1}: {level_at_time}")
+            
+            with st.expander("세션별 레벨 변화 보기"):
+                for data in growth_data[-10:]:
+                    st.write(data)
+            
+            st.success(f"총 {total_sessions}회의 몰입으로 꾸준히 성장 중입니다!")
             
             # 전체 보고서 텍스트 영역
             st.text_area("📋 전체 보고서 (Ctrl+C로 복사)", full_report, height=400)
@@ -794,8 +899,9 @@ st.markdown(
     "<div style='text-align: center; color: gray;'>"
     "© 2025 직장인 몰입 체험 프로그램 | "
     "황농문 교수님의 1초 원칙 기반 | "
-    "개발: 갯버들 | "
-    "문의: sjks007@gmail.com"
+    "개발: 갯버들(한승희) | "
+    "문의: sjks007@gmail.com | "
+    "바이브 코딩으로 완성"
     "</div>", 
     unsafe_allow_html=True
 )
