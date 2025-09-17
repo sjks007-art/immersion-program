@@ -350,7 +350,7 @@ with st.sidebar:
     st.markdown("""
     🎥 [유튜브 채널](https://www.youtube.com/@hwangflow)  
     🏫 [몰입아카데미](https://www.flow-academy.co.kr/)  
-    📖 저서: 몰입, 슬로싱킹, 몰입의 경영
+    📖 저서: 몰입(확장판), 슬로싱킹
     
     > "몰입은 긴장이 아니라 이완"
     """)
@@ -366,7 +366,7 @@ if st.session_state.page == "home":
     
     st.markdown("""
     ### 📖 프로그램 소개
-    이 프로그램은 황농문 교수님의 **'1초 원칙'**과 **'슬로싱킹'** 철학을 바탕으로 
+    이 프로그램은 황농문 교수님의 '1초 원칙'과 '슬로싱킹' 철학을 바탕으로 
     직장인들이 일상에서 몰입을 실천할 수 있도록 돕습니다.
     
     #### 핵심 원칙:
@@ -478,6 +478,7 @@ elif st.session_state.page == "immersion":
                         for i in range(40):
                             scale = 1 + (0.3 * (i / 40))  # 1.0 → 1.3
                             opacity = 0.7 + (0.3 * (i / 40))  # 0.7 → 1.0
+                            seconds = (i // 10) + 1
                             
                             breathing_placeholder.markdown(
                                 f'''<div style="
@@ -493,13 +494,13 @@ elif st.session_state.page == "immersion":
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
-                                    font-size: {20 + i/4}px;
+                                    font-size: {28}px;
                                     color: rgba(76, 175, 80, {opacity});
                                     background: rgba(76, 175, 80, {opacity * 0.1});
                                     transition: all 0.1s ease;
                                     font-weight: bold;
                                     ">
-                                    들숨 {cycle+1}/3<br>{i//10 + 1}초
+                                    들숨 {seconds}초
                                     </div>
                                 </div>''', 
                                 unsafe_allow_html=True
@@ -511,6 +512,7 @@ elif st.session_state.page == "immersion":
                         for i in range(80):
                             scale = 1.3 - (0.4 * (i / 80))  # 1.3 → 0.9
                             opacity = 1 - (0.3 * (i / 80))  # 1.0 → 0.7
+                            seconds = (i // 10) + 1
                             
                             breathing_placeholder.markdown(
                                 f'''<div style="
@@ -526,13 +528,13 @@ elif st.session_state.page == "immersion":
                                     display: flex;
                                     align-items: center;
                                     justify-content: center;
-                                    font-size: {24 - i/5}px;
+                                    font-size: {28}px;
                                     color: rgba(76, 175, 80, {opacity});
                                     background: rgba(76, 175, 80, {opacity * 0.05});
                                     transition: all 0.1s ease;
                                     font-weight: bold;
                                     ">
-                                    날숨 {cycle+1}/3<br>{i//10 + 1}초
+                                    날숨 {seconds}초
                                     </div>
                                 </div>''', 
                                 unsafe_allow_html=True
@@ -558,7 +560,7 @@ elif st.session_state.page == "immersion":
                         '</div>', 
                         unsafe_allow_html=True
                     )
-                    st.success("호흡이 완료되었습니다! 이제 몰입을 시작할 수 있습니다.")
+                    st.success("호흡법으로 마음이 편안해졌습니다. 준비가 되셨으면 몰입을 시작해보세요.")
             
             with button_col2:
                 st.info(f"호흡 횟수: {st.session_state.breathing_count}회")
