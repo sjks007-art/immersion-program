@@ -342,6 +342,23 @@ with st.sidebar:
     
     # 오늘의 지혜
     st.info(f"💡 **오늘의 지혜**\n\n_{random.choice(QUOTES)}_\n\n- 황농문")
+    
+    st.markdown("---")
+    
+    # 황농문 교수님 링크
+    st.markdown("### 📚 황농문 교수님")
+    st.markdown("""
+    🎥 [유튜브 채널](https://www.youtube.com/@hwangflow)  
+    🏫 [몰입아카데미](https://www.flow-academy.co.kr/)  
+    📖 저서: 몰입, 슬로싱킹, 몰입의 경영
+    
+    > "몰입은 긴장이 아니라 이완"
+    """)
+    
+    st.markdown("---")
+    st.markdown("### 🛠️ 프로그램 정보")
+    st.markdown("개발: 갯버들")
+    st.markdown("문의: sjks007@gmail.com")
 
 # 메인 콘텐츠
 if st.session_state.page == "home":
@@ -911,12 +928,10 @@ elif st.session_state.page == "report":
 # 푸터
 st.markdown("---")
 st.markdown(
-    "<div style='text-align: center; color: gray;'>"
-    "© 2025 직장인 몰입 체험 프로그램 | "
-    "황농문 교수님의 1초 원칙 기반 | "
-    "개발: 갯버들(한승희) | "
-    "문의: sjks007@gmail.com | "
-    "바이브 코딩으로 완성"
+    "<div style='text-align: center; color: gray; font-size: 14px;'>"
+    "© 2025 직장인 몰입 체험 프로그램<br>"
+    "황농문 교수님의 1초 원칙 기반 | 개발: 갯버들<br>"
+    "문의: sjks007@gmail.com"
     "</div>", 
     unsafe_allow_html=True
 )
