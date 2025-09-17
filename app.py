@@ -145,16 +145,19 @@ st.markdown("""
         font-size: 24px;
         font-weight: bold;
         color: #4CAF50;
+        transition: all 0.5s ease;
     }
     
-    .breathing-guide.active {
-        animation: breathe 12s ease-in-out infinite;
+    .breathing-guide.inhale {
+        transform: scale(1.3);
+        background-color: rgba(76, 175, 80, 0.1);
+        border-color: #4CAF50;
     }
     
-    @keyframes breathe {
-        0%, 100% { transform: scale(1); opacity: 0.7; }
-        33% { transform: scale(1.2); opacity: 1; }
-        66% { transform: scale(0.9); opacity: 0.9; }
+    .breathing-guide.exhale {
+        transform: scale(0.9);
+        background-color: rgba(76, 175, 80, 0.05);
+        border-color: #81C784;
     }
     
     /* 버튼 스타일 */
@@ -406,18 +409,20 @@ elif st.session_state.page == "immersion":
             
             # 호흡 가이드
             breathing_container = st.empty()
-            
-            col1, col2, col3 = st.columns(3)
+            breathing_container.markdown(
+                '<div class="breathing-guide">준비</div>', 
+                unsafe_allow_html=True
+            )            col1, col2, col3 = st.columns(3)
             with col1:
                 if st.button("🧘 호흡 시작", type="primary"):
                     progress_bar = st.progress(0)
                     status_text = st.empty()
                     
                     for cycle in range(3):
-                        # 들숨 (4초)
+                        # 들숨 (4초) - 원이 커짐
                         for i in range(40):
                             breathing_container.markdown(
-                                f'<div class="breathing-guide active">'
+                                f'<div class="breathing-guide inhale">'
                                 f'들숨 {cycle+1}/3<br>({i//10 + 1}/4초)'
                                 f'</div>', 
                                 unsafe_allow_html=True
@@ -425,10 +430,10 @@ elif st.session_state.page == "immersion":
                             progress_bar.progress((cycle * 120 + i) / 360)
                             time.sleep(0.1)
                         
-                        # 날숨 (8초)
+                        # 날숨 (8초) - 원이 작아짐
                         for i in range(80):
                             breathing_container.markdown(
-                                f'<div class="breathing-guide active">'
+                                f'<div class="breathing-guide exhale">'
                                 f'날숨 {cycle+1}/3<br>({i//10 + 1}/8초)'
                                 f'</div>', 
                                 unsafe_allow_html=True
