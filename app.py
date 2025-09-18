@@ -348,8 +348,8 @@ with st.sidebar:
     # 황농문 교수님 링크
     st.markdown("### 📚 황농문 교수님")
     st.markdown("""
-    🎥 [유튜브 채널](https://www.youtube.com/@hwangflow)  
-    🏫 [몰입아카데미](https://www.flow-academy.co.kr/)  
+    🎥 [유튜브 채널](https://www.youtube.com/@molipacademy)  
+    🏫 [몰입아카데미](https://molip.co.kr/)  
     📖 저서: 몰입(확장판), 슬로싱킹
     
     > "몰입은 긴장이 아니라 이완"
